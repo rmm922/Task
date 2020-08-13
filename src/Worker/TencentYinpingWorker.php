@@ -82,8 +82,13 @@ class TencentYinpingWorker extends BaseWorker implements Worker
     public function actionTencentYinping($data = '') {
         //数据库数据ID
         $ID           = $data['insertID'];
-        $out          = ! empty( $data['out'] ) ? $data['out'] : ''; //音频完整路径 本地服务器绝对路径
-        $task_out_url = ! empty( $data['task_out_url'] ) ? $data['task_out_url'] : ''; //音频完整路径  域名路径
+        //创建音频目录
+        $out_name = $ID. '.wav';
+        $mkdir_url = $this->config['url'] . '/data/audioTranslation/' . date('Y_m_d');
+        //音频完整路径
+        $out = $mkdir_url . '/' . $out_name;//音频完整路径 本地服务器绝对路径
+        $task_out_url = 'data/audioTranslation/' . date('Y_m_d') . '/'. $out_name;//音频完整路径  域名路径
+
         if( $out && file_exists($out) ) {
             // http://test.eovobochina.com/data/audioTranslation/2020_08_03/23.wav
             $url = $this->config['eovobochina_url'] . $task_out_url;

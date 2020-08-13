@@ -43,11 +43,21 @@ class TestWorker extends BaseWorker implements Worker
         try {
             //反序列化对象
             $data_info = json_decode($this->job->getData(),true);
-            file_put_contents('data_info.txt', print_r($this->config, true));
+            $ID = 10;
+            $this->pdo->query("SET NAMES utf8");
+            $sql  = 'SELECT video_url,img_url,gid,tencent_file_id  FROM p46_exhibition_preview WHERE  pid = ' . $ID . ' ';
+            $rs = $this->pdo->query($sql);
+            $rs->setFetchMode(\PDO::FETCH_ASSOC);
+            $dbData = $rs->fetchAll();
+            echo "<pre>";
+            print_r($dbData);
+            $return_data = [];
+            if($dbData) {
+                $return_data  =  $dbData;
+            }
             $this->logger->info('job处理成功日志信息输出', [
                 'id' => $this->job->getId(),
             ]);
-            echo 11;
             return [
                 'code' => Code::$success
             ];

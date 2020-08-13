@@ -23,9 +23,9 @@ return [
             'worker_num' => 2,
             'class' => \SWBT\Worker\TencentSMSWorker::class
         ],
-        'test' => [
-            'worker_num' => 3,
-            'class' => \SWBT\Worker\TestWorker::class
+        'likeNumber' => [
+            'worker_num' => 2,
+            'class' => \SWBT\Worker\LikeNumberWorker::class
         ]
     ],
     'beanstalkd' => [

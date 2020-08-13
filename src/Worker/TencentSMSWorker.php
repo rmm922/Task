@@ -469,7 +469,7 @@ class TencentSMSWorker extends BaseWorker implements Worker
             'email_curl'  => 'index.php?app=api/send/email',
         ];
         $url = $allow_type[$type];    
-        $url = $this->config['eovobochina_url'] . $url;
+        $url = $this->config['phone_url'] . $url;
         
         @$url = $url. '&' . http_build_query($info);
         curl_setopt($ch, CURLOPT_URL, $url);                                

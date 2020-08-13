@@ -76,6 +76,14 @@ class TencentWorker extends BaseWorker implements Worker
                 } else {
                     $msg = 'dwk完成处理-tencentDianbo--云点播修改-失败' . $res;
                 }    
+            } else if ($data_info['type'] == 'tencentDianboYasuo') {
+                //初始化原住民
+                $res = $this->actionTencentDianboYasuo($data_info);
+                if ($res == 200) {
+                    $msg = 'dwk完成处理-tencentDianbo--视频压缩-成功';
+                } else {
+                    $msg = 'dwk完成处理-tencentDianbo--视频压缩-失败' . $res;
+                }        
             } else {
                 $msg  = '参数错误';
             }
@@ -93,6 +101,38 @@ class TencentWorker extends BaseWorker implements Worker
         }
     }
 
+    /**
+     * 修改云点播数据
+     */
+    public function actionTencentDianboYasuo($data = '') {
+        //数据库数据ID
+        $InsertID  = $data['insertID'];
+        $vurl      = $data['video_url'];
+        $url       = parse_url($vurl);
+        /*<pre>Array
+        (
+            [scheme] => http
+            [host] => mydata.eovobo.com
+            [path] => /data/preview_video/2020_08_12/1597241494348983527.mp4
+        )*/
+        $video_url = isset($url['path']) ? $url['path'] : $vurl;
+        //创建音频目录
+        $out_name = $InsertID. '.wav';
+
+        //视频目录
+        $MediaFilePath = $this->config['url'] . $video_url;
+
+        //创建音频目录
+        $out_name = $InsertID. '.wav';
+        $mkdir_url = $this->config['url'] . '/data/audioTranslation/' . date('Y_m_d');
+       
+        self::make_dir($mkdir_url);
+
+        //音频完整路径
+        $out = $mkdir_url . '/' . $out_name;
+        shell_exec("ffmpeg -i $MediaFilePath -acodec pcm_s16le -ar 16000 -ac 1 $out > /dev/null 2>&1 &");
+        return true;
+    }
     /**
      * 修改云点播数据
      */
@@ -117,6 +157,8 @@ class TencentWorker extends BaseWorker implements Worker
 
             $CoverData = '';
             if($CoverFilePath) {
+                $CoverFilePath       = parse_url($CoverFilePath);
+                $CoverFilePath       = isset($CoverFilePath['path']) ? $CoverFilePath['path'] : $CoverFilePath;
                 //绝对路径
                 $CoverFilePath = $this->config['url'] . $CoverFilePath;
                 $CoverData     = self::base64EncodeImage($CoverFilePath);
@@ -230,6 +272,8 @@ class TencentWorker extends BaseWorker implements Worker
         $req = new VodUploadRequest();
         if($MediaFilePath) {
             //绝对路径
+            $MediaFilePath       = parse_url($MediaFilePath);
+            $MediaFilePath       = isset($MediaFilePath['path']) ? $MediaFilePath['path'] : $MediaFilePath;
             $MediaFilePath = $this->config['url'] . $MediaFilePath;
             $req->MediaFilePath = $MediaFilePath;  //待上传的媒体文件路径。必须为本地路径，不支持 URL。	
            
@@ -237,6 +281,8 @@ class TencentWorker extends BaseWorker implements Worker
 
         if($CoverFilePath) {
             //绝对路径
+            $CoverFilePath       = parse_url($CoverFilePath);
+            $CoverFilePath       = isset($CoverFilePath['path']) ? $CoverFilePath['path'] : $CoverFilePath;
             $CoverFilePath = $this->config['url'] . $CoverFilePath;
             //封面
             $req->CoverFilePath = $CoverFilePath;
@@ -314,6 +360,65 @@ class TencentWorker extends BaseWorker implements Worker
         $image_data = file_get_contents($image_file);
         $base64_image = base64_encode($image_data);
         return $base64_image;
+    }
+
+    public function make_dir($folder)
+    {
+        $reval = false;
+
+        if (!file_exists($folder))
+        {
+            /* 如果目录不存在则尝试创建该目录 */
+            @umask(0);
+
+            /* 将目录路径拆分成数组 */
+            preg_match_all('/([^\/]*)\/?/i', $folder, $atmp);
+
+            /* 如果第一个字符为/则当作物理路径处理 */
+            $base = ($atmp[0][0] == '/') ? '/' : '';
+
+            /* 遍历包含路径信息的数组 */
+            foreach ($atmp[1] AS $val)
+            {
+                if ('' != $val)
+                {
+                    $base .= $val;
+
+                    if ('..' == $val || '.' == $val)
+                    {
+                        /* 如果目录为.或者..则直接补/继续下一个循环 */
+                        $base .= '/';
+
+                        continue;
+                    }
+                }
+                else
+                {
+                    continue;
+                }
+
+                $base .= '/';
+
+                if (!file_exists($base))
+                {
+                    /* 尝试创建目录，如果创建失败则继续循环 */
+                    if (@mkdir(rtrim($base, '/'), 0777))
+                    {
+                        @chmod($base, 0777);
+                        $reval = true;
+                    }
+                }
+            }
+        }
+        else
+        {
+            /* 路径已经存在。返回该路径是不是一个目录 */
+            $reval = is_dir($folder);
+        }
+
+        clearstatcache();
+
+        return $reval;
     }
    
     //  关闭链接

@@ -123,6 +123,10 @@ class TencentYinpingWorker1 extends BaseWorker implements Worker
      */
     public function updateAudioTranslation( $Id = '' , $rsp = '') {
         if(!$Id) { return false;}
+        $audio_translation_array = '';
+        if($rsp['Result']) {
+            $audio_translation_array  = self::audio_translation_array($rsp['Result']);
+        }    
         $where = '';
         if($rsp['Status'] == 2) {
             $where .= 'tencent_status = 2';
@@ -132,6 +136,9 @@ class TencentYinpingWorker1 extends BaseWorker implements Worker
         if($rsp['Result']) {
             $where .= ', audio_translation = '. ' "' . trim( $rsp['Result'] ) . '"';
         }
+        // if($audio_translation_array) {
+        //     $where .= ', audio_translation_text = '. ' "' . json_encode( $audio_translation_array ) . '"';
+        // }
         $this->pdo->query("SET NAMES utf8");
         $sql  = "UPDATE `p46_exhibition_preview` SET $where WHERE `pid`=:pid";
         $stmt = $this->pdo->prepare($sql);
@@ -139,6 +146,58 @@ class TencentYinpingWorker1 extends BaseWorker implements Worker
        
     }
     
+    /**
+     * 压缩回来的信息处理
+     */
+    public function audio_translation_array($rsp = '') {
+        $arr_new = [];
+        if($rsp) {
+            $audio_translation = trim($rsp);
+            $arr = explode('[',$audio_translation);
+            unset($arr[0]);
+            foreach ($arr as $k=>$v)
+            {
+                $key = substr($v,0,strpos($v,']'));
+                $key_k = explode(',',$key);
+                $key_nuw = '';
+                foreach ($key_k as $kk=>$vv)
+                {
+                    $key_v = substr($vv,0,-4);
+                    if($key_nuw !== '')
+                    {
+                        $key_nuw .=  '-' . self::HisToS($key_v);
+                    }
+                    else
+                    {
+                        $key_nuw = self::HisToS($key_v);
+                    }
+                }
+                $v_new = trim(substr($v,strpos($v,']')+1));
+                $arr_new[$key_nuw] = $v_new;
+            }
+        }    
+        return  $arr_new ;
+    }
+    /**
+     * 时间处理
+     */
+    public function HisToS($his)
+    {
+        $str = explode(':', $his);
+
+        $len = count($str);
+
+        if ($len == 3) {
+            $time = $str[0] * 3600 + $str[1] * 60 + $str[2];
+        } elseif ($len == 2) {
+            $time = $str[0] * 60 + $str[1];
+        } elseif ($len == 1) {
+            $time = $str[0];
+        } else {
+            $time = 0;
+        }
+        return $time;
+    }
 
     /**
      * Status 任务状态码，0：任务等待，1：任务执行中，2：任务成功，3：任务失败
