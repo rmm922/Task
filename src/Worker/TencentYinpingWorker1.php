@@ -136,9 +136,9 @@ class TencentYinpingWorker1 extends BaseWorker implements Worker
         if($rsp['Result']) {
             $where .= ', audio_translation = '. ' "' . trim( $rsp['Result'] ) . '"';
         }
-        // if($audio_translation_array) {
-        //     $where .= ', audio_translation_text = '. ' "' . json_encode( $audio_translation_array ) . '"';
-        // }
+        if($audio_translation_array) {
+            $where .= ', audio_translation_text = '. "'" . json_encode($audio_translation_array, JSON_UNESCAPED_UNICODE) ."'";
+        }
         $this->pdo->query("SET NAMES utf8");
         $sql  = "UPDATE `p46_exhibition_preview` SET $where WHERE `pid`=:pid";
         $stmt = $this->pdo->prepare($sql);

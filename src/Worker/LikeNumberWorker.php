@@ -40,7 +40,7 @@ class LikeNumberWorker extends BaseWorker implements Worker
         //redis配置
         $this->redis = new \Redis();
         $this->redis->connect($this->config['redis_host'], $this->config['redis_port']);
-        // $this->redis = new \RedisCluster(NULL, $this->config['redis_host_cluster'], 1.5, 1.5);
+        $this->redis->auth($this->config['redis_auth']);
     }
 
      /**
