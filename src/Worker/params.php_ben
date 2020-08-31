@@ -1,0 +1,38 @@
+<?php
+
+return $config = [
+    'redis' =>[
+        'ver_get_tourists_info'   => 'ver_wz_tourists_info_',//游客数据处理点赞
+        'ver_get_host_info'       => 'ver_wz_host_info_',//主播数据处理点赞
+        'ver_get_host_translation_info' => 'ver_wz_host_translation_info_',//主播数据处理点赞
+    ],
+    'connection' => [
+        'mysql_host'     => "mysql:host=120.78.199.238;port=3306;dbname=test",
+        'mysql_user'     => "rmm",
+        'mysql_password' => "rm001",
+        'redis_host'     => '120.78.199.238',
+        'redis_port'     => '6379',
+        'secretId'       => 'AKIDJQLzNG5KSLgpgGbdR0JxTigNYUA1s4rO',
+        'secretKey'      => 'OZWHLA5nGSedR9iV2JJzPXP4c1IQUIpH',
+        'url'             => '/www/wwwroot/mydata.eovobo.com',
+        'eovobochina_url' => 'http://mydata.eovobo.com/',
+        'phone_url'       => 'http://test.eovobochina.com/',
+        'ClassId'       => [
+            1 => 699117,
+            2 => 699118,
+            3 => 699119,
+            4 => 0,
+        ],
+        'token' => '@)@)2020&WanZhan_W_MAC-wate',
+        'template' => 33,
+        'subject'  => '【爱欧沃伯】邀请通知',
+        'subject_title'  => '【爱欧沃伯】',
+        'smtp_host' => 'smtp.exmail.qq.com',
+        'smtp_port' => '465',
+        'smtp_user' => 'sender@yiweihy.com',
+        'smtp_pass' => 'yr5mWg5mc3MhLk4a',
+        'smtp_mail' => 'sender@yiweihy.com',
+    ]
+    
+];
+

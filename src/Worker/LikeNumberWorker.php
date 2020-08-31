@@ -137,6 +137,17 @@ class LikeNumberWorker extends BaseWorker implements Worker
         //删除直播音频记录
         $ver_get_host_translation_info_zh = $this->params['ver_get_host_translation_info'].'zh_'.$rid;
         $ver_get_host_translation_info_en = $this->params['ver_get_host_translation_info'].'en_'.$rid;
+
+        //翻译结果保留数据
+        $return_zh = $return_en = [];
+        if ($this->redis->exists($ver_get_host_translation_info_zh)) {
+            $return_zh = $this->redis->lrange($ver_get_host_translation_info_zh, 0,-1); 
+        }
+        if ($this->redis->exists($ver_get_host_translation_info_en)) {
+            $return_en = $this->redis->lrange($ver_get_host_translation_info_en, 0,-1); 
+        }
+        self::p46_exhibition_room_translation_info($tid, $return_zh, $return_en);
+
         self::redis_key_del($ver_get_host_translation_info_zh);
         self::redis_key_del($ver_get_host_translation_info_en);
 
@@ -144,6 +155,22 @@ class LikeNumberWorker extends BaseWorker implements Worker
         return true;
     }
     
+    /**
+     * 直播翻译
+     * tid        场次ID
+     * return_zh    中文翻译
+     * return_en    英文翻译
+     */
+    public function p46_exhibition_room_translation_info($tid = '', $zh = '', $en = '') {
+
+        $this->pdo->query("SET NAMES utf8");
+        $sql  = "INSERT INTO `p46_exhibition_room_translation` (tid,zh,en)  VALUES (:tid,:zh,:en)";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute(array(':tid' => $tid ,':zh' => json_encode($zh, JSON_UNESCAPED_UNICODE) ,':en' => json_encode($en, JSON_UNESCAPED_UNICODE) ));
+        return true;
+
+    }
+
      /**
      * 直播点赞数
      * tid        场次ID

@@ -53,15 +53,23 @@ class TencentWorker extends BaseWorker implements Worker
             $data_info = json_decode($this->job->getData(),true);
             
             if ($data_info['type'] == 'tencentDianbo') {
-                //初始化原住民
+                //云点播存储--展会管理
                 $res = $this->actionTencentDianbo($data_info);
                 if ($res == 200) {
-                    $msg = 'dwk完成处理-tencentDianbo--云点播存储-成功';
+                    $msg = 'dwk完成处理-tencentDianbo--展会-云点播存储-成功';
                 } else {
-                    $msg = 'dwk完成处理-tencentDianbo--云点播存储-失败' . $res;
+                    $msg = 'dwk完成处理-tencentDianbo--展会-云点播存储-失败' . $res;
+                }
+            } else if ($data_info['type'] == 'tencentDianboUserVideo') {
+                //云点播存储--商家视频管理
+                $res = $this->actionTencentDianboUserVideo($data_info);
+                if ($res == 200) {
+                    $msg = 'dwk完成处理-tencentDianbo--商家-云点播存储-成功';
+                } else {
+                    $msg = 'dwk完成处理-tencentDianbo--商家-云点播存储-失败' . $res;
                 }
             } else if ($data_info['type'] == 'tencentDeleteDianbo') {
-                //初始化原住民
+                //云点播删除
                 $res = $this->actionDeleteTencentDianbo($data_info);
                 if ($res == 200) {
                     $msg = 'dwk完成处理-tencentDianbo--云点播删除-成功';
@@ -69,20 +77,28 @@ class TencentWorker extends BaseWorker implements Worker
                     $msg = 'dwk完成处理-tencentDianbo--云点播删除-失败' . $res;
                 }
             } else if ($data_info['type'] == 'tencentUpdateDianbo') {
-                //初始化原住民
+                //云点播修改 展会管理
                 $res = $this->actionUpdateTencentDianbo($data_info);
                 if ($res == 200) {
-                    $msg = 'dwk完成处理-tencentDianbo--云点播修改-成功';
+                    $msg = 'dwk完成处理-tencentDianbo--展会-云点播修改-成功';
                 } else {
-                    $msg = 'dwk完成处理-tencentDianbo--云点播修改-失败' . $res;
+                    $msg = 'dwk完成处理-tencentDianbo--展会-云点播修改-失败' . $res;
+                }    
+            } else if  ($data_info['type'] == 'tencentUpdateDianboUserVideo') {
+                //云点播修改 商家
+                $res = $this->actionUpdateTencentDianboUserVideo($data_info);
+                if ($res == 200) {
+                    $msg = 'dwk完成处理-tencentDianbo--商家-云点播修改-成功';
+                } else {
+                    $msg = 'dwk完成处理-tencentDianbo--商家-云点播修改-失败' . $res;
                 }    
             } else if ($data_info['type'] == 'tencentDianboYasuo') {
-                //初始化原住民
+                //视频压缩 展会
                 $res = $this->actionTencentDianboYasuo($data_info);
                 if ($res == 200) {
-                    $msg = 'dwk完成处理-tencentDianbo--视频压缩-成功';
+                    $msg = 'dwk完成处理-tencentDianbo--展会-视频压缩-成功';
                 } else {
-                    $msg = 'dwk完成处理-tencentDianbo--视频压缩-失败' . $res;
+                    $msg = 'dwk完成处理-tencentDianbo--展会-视频压缩-失败' . $res;
                 }        
             } else {
                 $msg  = '参数错误';
@@ -251,6 +267,7 @@ class TencentWorker extends BaseWorker implements Worker
     }
      /**
      * 云点播服务执行
+     * 展会视频
      */
     public function actionTencentDianbo($data = '') {
         //数据库数据ID
@@ -315,6 +332,7 @@ class TencentWorker extends BaseWorker implements Worker
 
     /**
      * 获取数据
+     * 展会视频
     */
     public function selectAudioTranslation( $ID = '' ) {
         if(!$ID) { return false;}
@@ -420,7 +438,194 @@ class TencentWorker extends BaseWorker implements Worker
 
         return $reval;
     }
-   
+    
+
+     /**
+     * 云点播服务执行
+     * 商家视频
+     */
+    public function actionTencentDianboUserVideo($data = '') {
+        //数据库数据ID
+        $ID = $data['insertID'];
+        //查出数据
+        $p46_user_video_data =  self::selectUserVideoTable($ID);
+        if(!$p46_user_video_data) { return false;}
+        //查询出来是二维数组
+        $p46_user_video_info = $p46_user_video_data[0];
+        
+        //拼接路径
+        $MediaFilePath = $p46_user_video_info['video_url'];//视频路径
+        $CoverFilePath = $p46_user_video_info['img_url'];//图片路径
+        $ClassId =       '';//分类 ID
+        $insertId =      $ID;//插入表数据ID
+
+        $client = new VodUploadClient($this->config['secretId'], $this->config['secretKey']);
+
+        $req = new VodUploadRequest();
+        if($MediaFilePath) {
+            //绝对路径
+            $MediaFilePath       = parse_url($MediaFilePath);
+            $MediaFilePath       = isset($MediaFilePath['path']) ? $MediaFilePath['path'] : $MediaFilePath;
+            $MediaFilePath = $this->config['url'] . $MediaFilePath;
+            $req->MediaFilePath = $MediaFilePath;  //待上传的媒体文件路径。必须为本地路径，不支持 URL。	
+           
+        }
+
+        if($CoverFilePath) {
+            //绝对路径
+            $CoverFilePath       = parse_url($CoverFilePath);
+            $CoverFilePath       = isset($CoverFilePath['path']) ? $CoverFilePath['path'] : $CoverFilePath;
+            $CoverFilePath = $this->config['url'] . $CoverFilePath;
+            //封面
+            $req->CoverFilePath = $CoverFilePath;
+        }
+
+        //所属分类
+        if($ClassId) {
+            $ClassIdInfo  =  $this->config['ClassId'];
+            //分类 ID
+            $ClassId      =  $ClassIdInfo[$ClassId];
+            $req->ClassId = intval($ClassId);
+        }
+        try {
+            $rsp = $client->upload("ap-guangzhou", $req); //（"ap-guangzhou"）是指上传实例的接入地域，不是指视频上传后的存储地域。该参数固定填为"ap-guangzhou"即可，如果需要指定视频上传后的存储地域，请设置req.StorageRegion参数。
+
+            $rspData = [
+                'FileId'     => $rsp->FileId,
+                'MediaUrl'   => $rsp->MediaUrl,
+                'CoverUrl'   => $rsp->CoverUrl
+            ];
+            self::updateUserVideoTable($insertId, $rspData);
+
+        } catch (\Exception $e) {
+            // 处理上传异常
+            echo $e;
+        }
+        
+        return true;
+    }
+
+    /**
+     * 获取数据
+     * 商家视频
+    */
+    public function selectUserVideoTable( $ID = '' ) {
+        if(!$ID) { return false;}
+        $this->pdo->query("SET NAMES utf8");
+        $sql  = 'SELECT video_url,img_url,tencent_file_id  FROM p46_user_video WHERE  vid = ' . $ID . ' ';
+        $rs = $this->pdo->query($sql);
+        $rs->setFetchMode(\PDO::FETCH_ASSOC);
+        $dbData = $rs->fetchAll();
+        $return_data = [];
+        if($dbData) {
+            $return_data  =  $dbData;
+        }
+        return $return_data;
+    }
+
+     /**
+     * 更新数据
+     * 商家视频
+    */
+    public function updateUserVideoTable( $Id = '' , $rsp = '') {
+        if(!$Id) { return false;}
+        $where = '';
+        if($rsp['FileId']) {
+            $where .= 'tencent_file_id = '. $rsp['FileId'];
+        }
+        if($rsp['MediaUrl']) {
+            $where .= ', tencent_video_url = '. ' "' . $rsp['MediaUrl'] . '"';
+        }
+        if($rsp['CoverUrl']) {
+            $where .= ', tencent_img_url = '. ' "' . $rsp['CoverUrl'] . '"';
+        }
+        $this->pdo->query("SET NAMES utf8");
+        $sql  = "UPDATE `p46_user_video` SET $where WHERE `vid`=:vid";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute(array(':vid' => $Id));
+    }
+
+   /**
+     * 修改云点播数据
+     */
+    public function actionUpdateTencentDianboUserVideo($data = '') {
+
+        try {
+
+            //数据库数据ID
+            $ID = $data['insertID'];
+            //查出数据
+            $p46_user_video_data =  self::selectUserVideoTable($ID);
+            if(!$p46_user_video_data) { return false;}
+            //查询出来是二维数组
+            $p46_user_video_info = $p46_user_video_data[0];
+
+            //拼接路径
+            $FileId        = $p46_user_video_info['tencent_file_id'];
+            $CoverFilePath = $p46_user_video_info['img_url'];//图片路径
+            $ClassId       = '';//分类 ID
+            $insertId      = $ID;//插入表数据ID
+            if(!$FileId) { return false;}
+
+            $CoverData = '';
+            if($CoverFilePath) {
+                $CoverFilePath       = parse_url($CoverFilePath);
+                $CoverFilePath       = isset($CoverFilePath['path']) ? $CoverFilePath['path'] : $CoverFilePath;
+                //绝对路径
+                $CoverFilePath = $this->config['url'] . $CoverFilePath;
+                $CoverData     = self::base64EncodeImage($CoverFilePath);
+            }
+    
+            //所属分类
+            if($ClassId) {
+                $ClassIdInfo =  $this->config['ClassId'];
+                //分类 ID
+                $ClassId = $ClassIdInfo[$ClassId];
+            }
+
+            $cred = new Credential($this->config['secretId'], $this->config['secretKey']);
+            $httpProfile = new HttpProfile();
+            $httpProfile->setEndpoint("vod.tencentcloudapi.com");
+              
+            $clientProfile = new ClientProfile();
+            $clientProfile->setHttpProfile($httpProfile);
+            $client = new VodClient($cred, "ap-chongqing", $clientProfile);
+        
+            $req = new ModifyMediaInfoRequest();
+            if($CoverData) {
+                $params = array(
+                    "FileId" => $FileId,
+                    "ClassId" => intval( $ClassId ),
+                    "CoverData" => $CoverData
+                );
+            } else {
+                $params = array(
+                    "FileId" => $FileId,
+                    "ClassId" => intval( $ClassId ),
+                );
+            }
+            $req->fromJsonString(json_encode($params));
+        
+        
+            $resp = $client->ModifyMediaInfo($req);
+        
+            $info = $resp->toJsonString();
+            $rsp =  json_decode($info, true);
+            if(! empty ($rsp['CoverUrl'])) {
+                $rspData = [
+                    'FileId'     => $FileId,
+                    'CoverUrl'   => $rsp['CoverUrl']
+                ];
+                self::updateUserVideoTable($insertId, $rspData);
+    
+            }
+        }
+        catch(TencentCloudSDKException $e) {
+            echo $e;
+        }
+        return true;
+    }
+
     //  关闭链接
      public function __destruct() {
         $this->pdo = null;
