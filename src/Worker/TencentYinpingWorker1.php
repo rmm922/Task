@@ -228,7 +228,7 @@ class TencentYinpingWorker1 extends BaseWorker implements Worker
         
         }
         catch(TencentCloudSDKException $e) {
-            echo $e;
+            // echo $e;
         }
     }
 

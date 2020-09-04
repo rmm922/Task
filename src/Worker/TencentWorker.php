@@ -225,7 +225,7 @@ class TencentWorker extends BaseWorker implements Worker
             }
         }
         catch(TencentCloudSDKException $e) {
-            echo $e;
+            // echo $e;
         }
         return true;
     }
@@ -261,7 +261,7 @@ class TencentWorker extends BaseWorker implements Worker
 
         } catch (TencentCloudSDKException $e) {
             // 处理上传异常
-            echo $e;
+            // echo $e;
         }
         return true;
     }
@@ -281,7 +281,8 @@ class TencentWorker extends BaseWorker implements Worker
         //拼接路径
         $MediaFilePath = $p46_exhibition_preview_info['video_url'];//视频路径
         $CoverFilePath = $p46_exhibition_preview_info['img_url'];//图片路径
-        $ClassId =       $p46_exhibition_preview_info['gid'];//分类 ID
+        // $ClassId =       $p46_exhibition_preview_info['gid'];//分类 ID
+        $ClassId  =      684545;//分类 ID
         $insertId =      $ID;//插入表数据ID
 
         $client = new VodUploadClient($this->config['secretId'], $this->config['secretKey']);
@@ -324,7 +325,7 @@ class TencentWorker extends BaseWorker implements Worker
 
         } catch (\Exception $e) {
             // 处理上传异常
-            echo $e;
+            // echo $e;
         }
         
         return true;
@@ -456,7 +457,7 @@ class TencentWorker extends BaseWorker implements Worker
         //拼接路径
         $MediaFilePath = $p46_user_video_info['video_url'];//视频路径
         $CoverFilePath = $p46_user_video_info['img_url'];//图片路径
-        $ClassId =       '';//分类 ID
+        $ClassId =       716892;//分类 ID
         $insertId =      $ID;//插入表数据ID
 
         $client = new VodUploadClient($this->config['secretId'], $this->config['secretKey']);
@@ -499,7 +500,7 @@ class TencentWorker extends BaseWorker implements Worker
 
         } catch (\Exception $e) {
             // 处理上传异常
-            echo $e;
+            // echo $e;
         }
         
         return true;
@@ -621,7 +622,7 @@ class TencentWorker extends BaseWorker implements Worker
             }
         }
         catch(TencentCloudSDKException $e) {
-            echo $e;
+            // echo $e;
         }
         return true;
     }
