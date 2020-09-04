@@ -167,7 +167,8 @@ class TencentWorker extends BaseWorker implements Worker
             //拼接路径
             $FileId        = $p46_exhibition_preview_info['tencent_file_id'];
             $CoverFilePath = $p46_exhibition_preview_info['img_url'];//图片路径
-            $ClassId       = $p46_exhibition_preview_info['gid'];//分类 ID
+            // $ClassId       = $p46_exhibition_preview_info['gid'];//分类 ID
+            $ClassId       = 684545;//分类 ID
             $insertId      = $ID;//插入表数据ID
             if(!$FileId) { return false;}
 
@@ -564,7 +565,7 @@ class TencentWorker extends BaseWorker implements Worker
             //拼接路径
             $FileId        = $p46_user_video_info['tencent_file_id'];
             $CoverFilePath = $p46_user_video_info['img_url'];//图片路径
-            $ClassId       = '';//分类 ID
+            $ClassId       = 716892;//分类 ID
             $insertId      = $ID;//插入表数据ID
             if(!$FileId) { return false;}
 
