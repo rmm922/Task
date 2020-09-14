@@ -375,6 +375,14 @@ class TencentSMSWorker extends BaseWorker implements Worker
                 } else {
                     $msg = 'dwk完成处理-taskDataSMS--短信发送-失败' . $res;
                 }
+            } else if ($data_info['type'] == 'taskDataSMSAbout') {
+                //初始发送短信接口
+                $res = $this->actionTaskDataSMSAbout($data_info);
+                if ($res == 200) {
+                    $msg = 'dwk完成处理-taskDataSMSAbout--短信发送-成功';
+                } else {
+                    $msg = 'dwk完成处理-taskDataSMSAbout--短信发送-失败' . $res;
+                }
             } else {
                 $msg  = '参数错误';
             }
@@ -392,6 +400,73 @@ class TencentSMSWorker extends BaseWorker implements Worker
         }
     }
 
+    /**
+     * 预约直播 开始直播 发送短信 邮件
+     */
+    public function actionTaskDataSMSAbout($data_info = '') {
+        //数据库数据ID  直播间的ID
+        $ID        = $data_info['rid'];
+        if(!$ID) { return false;}
+        $dataInfo  = self::selectAppointmentInfo($ID, 1);//查出直播间所对应的user_id  条件是 p46_exhibition_room 的 rid
+        $userID    = ! empty ( $dataInfo['user_id'] ) ? $dataInfo['user_id'] : ''; //217 房间  user_id 3453
+        if($userID) {
+            $dataInfo1 =  self::selectAppointmentInfo($userID, 2); //关联查出我的收到预约列表人数
+            if($dataInfo1) {
+                foreach ($dataInfo1 as $key => $value) { //循环处理数据
+                    $mobile_phone = ! empty( $value['mobile_phone'] ) ? $value['mobile_phone'] : ''; 
+                    $email        = ! empty( $value['email'] )        ? $value['email'] : ''; 
+                    $first_name   = ! empty( $value['first_name'] )   ? $value['first_name'] : ''; 
+                    $user_name    = ! empty( $value['user_name'] )    ? $value['user_name'] : ''; 
+                    $ccode        = ! empty( $value['ccode'] )        ? $value['ccode'] : ''; 
+                    /*$mobile_phone = '18201058764'; 
+                    $email        = '2547977230@qq.com'; 
+                    $first_name   = '任明明'; 
+                    $user_name    = 'renmingming'; 
+                    $ccode        = 86; */
+                    $activity     = $ID;
+                    $curl_data = [
+                        'mobile_phone' => $mobile_phone,
+                        'token'        => md5(md5($mobile_phone . $this->config['token'])),
+                        'validity'     => time() + 300,
+                        'activity'     => $activity,
+                        'template'     => 34, //34模板ID
+                        'ccode'        => $ccode, //手机号国家编码
+                    ];
+                    // 发送验证码接口
+                    $curlInfo = self::curls($curl_data,'phone_curl');
+                    //邮件发送
+                    $name = $first_name ? $first_name : $user_name;
+                    if($email && $name ) {
+                        $subject = $this->config['subject'];
+                        $content = '尊敬的用户，您预约的直播间'.$activity.'即将开始！';
+                        $send_mail =  self::send_mail($name, $email, $subject, $content);
+                    }
+                }
+            }
+        }
+        return true;
+    }
+
+    /**
+     * 查询表数据 有关开直播预约的信息处理
+     */
+    public function selectAppointmentInfo($ID = '', $type = '') {
+        if(!$ID) { return false;}
+        $this->pdo->query("SET NAMES utf8");
+        if($type == 1) {
+            $sql  = 'SELECT peu.user_id as user_id  FROM p46_exhibition_room AS per JOIN p46_exhibition_user AS  peu ON per.uid = peu.uid   WHERE  per.rid = ' . $ID . ' ';
+        } else if($type == 2) {
+            $sql  = "SELECT  mobile_phone,email,first_name, user_name,ccode  FROM  p46_appointment AS pa  JOIN p46_users  AS pu ON pa.from_id = pu.user_id WHERE pa.statu = 1 AND  pa.to_id = '$ID'";
+        }
+        $rs = $this->pdo->query($sql);
+        $rs->setFetchMode(\PDO::FETCH_ASSOC);
+        $dbData = $rs->fetchAll();
+        $return_data = [];
+        if($dbData) {
+            $return_data =  $type == 1 ? $dbData[0] : $dbData;
+        }
+        return $return_data;
+    }
     /**
      * 发送短信服务执行
      */
