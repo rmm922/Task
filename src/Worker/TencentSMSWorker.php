@@ -343,6 +343,8 @@ class TencentSMSWorker extends BaseWorker implements Worker
 {
     private $config;
     public  $pdo;
+    public  $redis;
+    private $params;
 
 	public function __construct(Container $container, Job $job)
     {
@@ -356,6 +358,13 @@ class TencentSMSWorker extends BaseWorker implements Worker
         date_default_timezone_set('PRC');
         //mysql配置
         $this->pdo   = new \PDO($this->config['mysql_host'], $this->config['mysql_user'], $this->config['mysql_password']);
+        //redis配置
+        $this->redis = new \Redis();
+        $this->redis->connect($this->config['redis_host'], $this->config['redis_port']);
+        $this->redis->auth($this->config['redis_auth']);
+
+        //缓存名称
+        $this->params      = $params['redis'];
     }
 
      /**
@@ -412,6 +421,7 @@ class TencentSMSWorker extends BaseWorker implements Worker
         if($userID) {
             $dataInfo1 =  self::selectAppointmentInfo($userID, 2); //关联查出我的收到预约列表人数
             if($dataInfo1) {
+                $activity = self::shortConnection($ID);
                 foreach ($dataInfo1 as $key => $value) { //循环处理数据
                     $mobile_phone = ! empty( $value['mobile_phone'] ) ? $value['mobile_phone'] : ''; 
                     $email        = ! empty( $value['email'] )        ? $value['email'] : ''; 
@@ -423,7 +433,6 @@ class TencentSMSWorker extends BaseWorker implements Worker
                     $first_name   = '任明明'; 
                     $user_name    = 'renmingming'; 
                     $ccode        = 86; */
-                    $activity     = $ID;
                     $curl_data = [
                         'mobile_phone' => $mobile_phone,
                         'token'        => md5(md5($mobile_phone . $this->config['token'])),
@@ -438,7 +447,7 @@ class TencentSMSWorker extends BaseWorker implements Worker
                     $name = $first_name ? $first_name : $user_name;
                     if($email && $name ) {
                         $subject = $this->config['subject'];
-                        $content = '尊敬的用户，您预约的直播间'.$activity.'即将开始！';
+                        $content = '尊敬的用户，您预约的直播间即将开始！请点击:' . $activity;
                         $send_mail =  self::send_mail($name, $email, $subject, $content);
                     }
                 }
@@ -446,7 +455,69 @@ class TencentSMSWorker extends BaseWorker implements Worker
         }
         return true;
     }
+    /**
+     * 生成短连接
+     * @param $ID 直播间ID
+     */
+    public function shortConnection($ID = '' ) {
+        if(!$ID) { return false;}
+        $room_url  = 'https://etest.eovobochina.com/index.php?app=exhibition/info&id=' . $ID . '&status=0';
+        $token =  self::token();
+        if(!$token) { return false;}
+        //开始请求
+        $curl = curl_init();
+        $urlData = 'https://api.weixin.qq.com/cgi-bin/shorturl?access_token=' . $token ;
+        $urlData1 = [
+            'action'   => 'long2short',
+            'long_url' => $room_url,
+        ];
+        curl_setopt_array($curl, array(
+        CURLOPT_URL => $urlData,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_ENCODING => "",
+        CURLOPT_MAXREDIRS => 10,
+        CURLOPT_TIMEOUT => 0,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+        CURLOPT_CUSTOMREQUEST => "POST",
+        CURLOPT_POSTFIELDS => json_encode($urlData1),
+        CURLOPT_HTTPHEADER => array(
+            "Content-Type: application/json"
+        ),
+        ));
+        $response = curl_exec($curl);
+        curl_close($curl);
+        $response = $response ? json_decode($response , true) : [];
+        if($response['errcode'] == 0) {
+            return $response['short_url'];
+        }else {
+            return '';
+        }
+    }
 
+    //生成token
+    public function token($cache = true) {
+        $info = '';
+        $redis_name  = $this->params['ver_get_weixin_token'];//redis缓存key
+        $info = $this->redis->get($redis_name);
+        if(!$info || $cache == false) {
+            //删除
+            $this->redis->del($redis_name);
+            $url = 'https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid='.$this->config['appID'].'&secret='. $this->config['appsecret'] .'';
+            $info =  file_get_contents($url);
+            if($info) {
+                $info = json_decode( $info , true );
+                $access_token = ! empty ( $info['access_token'] ) ? $info['access_token'] : '';
+                $expires_in   = ! empty ( $info['expires_in'] ) ? $info['expires_in'] : '';
+                if($access_token && $expires_in) {
+                    $this->redis->set($redis_name, $access_token);
+                    $this->redis->expire($redis_name, $expires_in);
+                    $info = $access_token;
+                }
+            }
+        }
+        return $info;
+    }
     /**
      * 查询表数据 有关开直播预约的信息处理
      */
@@ -667,6 +738,7 @@ class TencentSMSWorker extends BaseWorker implements Worker
     }
     //  关闭链接
     public function __destruct() {
+        $this->redis->close();
         $this->pdo = null;
     }
    
