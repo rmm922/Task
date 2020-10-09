@@ -60,6 +60,14 @@ class LikeNumberWorker extends BaseWorker implements Worker
                 } else {
                     $msg = 'dwk完成处理-likeNumber--点赞处理-失败' . $res;
                 }
+            } else if ( $data_info['type'] == 'likeNumberMeet' ) {  
+                //初始化原住民
+                $res = $this->actionLikeNumberMeet($data_info);
+                if ($res == 200) {
+                    $msg = 'dwk完成处理-likeNumber-会议处理-成功';
+                } else {
+                    $msg = 'dwk完成处理-likeNumber-会议处理-失败' . $res;
+                }  
             } else {
                 $msg  = '参数错误';
             }
@@ -75,6 +83,40 @@ class LikeNumberWorker extends BaseWorker implements Worker
             $this->logger->info('运行错误捕捉', ['id' => $this->job->getId(), 'data' => $e->getMessage()]);
             return ['code' => Code::$success];
         }
+    }
+
+    /**
+     * 点赞数处理 会议
+     * user_id 游客用户ID | 观众ID
+     * host_id 主播用户ID | 展商ID
+     * tid     场次ID（主键）
+     * rid     直播间ID
+     */
+    public function actionLikeNumberMeet($data_info = '') {
+        $data = $data_info['data'];
+        //数据库数据ID
+        $tid        = ! empty( $data['tid'] ) ? $data['tid'] : '';//场次ID
+        $pid        = ! empty ($data['pid']) ? $data['pid'] : '';//直播间ID
+        //判断参数完整性
+        if(!$tid || !$pid ){return false;}
+        //删除直播音频记录
+        $ver_get_host_translation_info_zh = $this->params['ver_get_host_translation_meet_info'].'zh_'.$pid;
+        $ver_get_host_translation_info_en = $this->params['ver_get_host_translation_meet_info'].'en_'.$pid;
+
+        //翻译结果保留数据
+        $return_zh = $return_en = [];
+        if ($this->redis->exists($ver_get_host_translation_info_zh)) {
+            $return_zh = $this->redis->lrange($ver_get_host_translation_info_zh, 0,-1); 
+        }
+        if ($this->redis->exists($ver_get_host_translation_info_en)) {
+            $return_en = $this->redis->lrange($ver_get_host_translation_info_en, 0,-1); 
+        }
+        self::p46_exhibition_room_translation_info($tid, $return_zh, $return_en);
+
+        self::redis_key_del($ver_get_host_translation_info_zh);
+        self::redis_key_del($ver_get_host_translation_info_en);
+
+        return true;
     }
 
     /**
