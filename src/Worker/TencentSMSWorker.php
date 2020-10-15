@@ -392,6 +392,22 @@ class TencentSMSWorker extends BaseWorker implements Worker
                 } else {
                     $msg = 'dwk完成处理-taskDataSMSAbout--短信发送-失败' . $res;
                 }
+            } else if ($data_info['type'] == 'taskDataSMSSendMeet') {//创建会议发起预约
+                //初始发送短信接口
+                $res = $this->actionTaskDataSMSMeetSend($data_info);
+                if ($res == 200) {
+                    $msg = 'dwk完成处理-taskDataSMSAboutMeetSend--短信发送-成功';
+                } else {
+                    $msg = 'dwk完成处理-taskDataSMSAboutMeetSend--短信发送-失败' . $res;
+                }
+            } else if( $data_info['type'] == 'taskDataSMSSendMeetBegin' ) {//创建会议发起 配对成功 即将开始    
+                //初始发送短信接口
+                $res = $this->actionTaskDataSMSMeetBegin($data_info);
+                if ($res == 200) {
+                    $msg = 'dwk完成处理-taskDataSMSMeetBegin--短信发送-成功';
+                } else {
+                    $msg = 'dwk完成处理-taskDataSMSMeetBegin--短信发送-失败' . $res;
+                }
             } else {
                 $msg  = '参数错误';
             }
@@ -409,6 +425,44 @@ class TencentSMSWorker extends BaseWorker implements Worker
         }
     }
 
+    /**
+     * 创建会议 发起预约短信内容
+     */
+    public function actionTaskDataSMSMeetSend($data_info = '') {
+        $data         = $data_info['data'];
+        $meetId       = $data['meetId'];//会议ID
+        $userID       = ! empty( $data['userId'] ) ? $data['userId'] : '';//用户ID 
+        $describe     = ! empty( $data['describe'] ) ? $data['describe'] : ''; //预约内容
+
+        $userInfo =  self::selectAppointmentInfo($userID, 3); //关联查出我的收到预约列表人数
+        if($userInfo) {
+            $value = $userInfo[0];
+            $activity = self::shortConnection($meetId, 3);//短连链接
+            $mobile_phone = ! empty( $value['mobile_phone'] ) ? $value['mobile_phone'] : ''; 
+            $email        = ! empty( $value['email'] )        ? $value['email'] : ''; 
+            $first_name   = ! empty( $value['first_name'] )   ? $value['first_name'] : ''; 
+            $user_name    = ! empty( $value['user_name'] )    ? $value['user_name'] : ''; 
+            $ccode        = ! empty( $value['ccode'] )        ? $value['ccode'] : ''; 
+            $curl_data = [
+                'mobile_phone' => $mobile_phone,
+                'token'        => md5(md5($mobile_phone . $this->config['token'])),
+                'validity'     => time() + 300,
+                'activity'     => $activity,
+                'template'     => 35, //35模板ID
+                'ccode'        => $ccode, //手机号国家编码
+            ];
+            // 发送验证码接口
+            $curlInfo = self::curls($curl_data,'phone_curl');
+            //邮件发送
+            $name = $first_name ? $first_name : $user_name;
+            if($email && $name ) {
+                $subject = $this->config['subject'];
+                $content = '尊敬的用户，您收到一份会议预约邀请函！预约内容:  '.$describe.'  请请点击:' . $activity;
+                $send_mail =  self::send_mail($name, $email, $subject, $content);
+            }
+        }
+        return true;
+    }
     /**
      * 预约直播 开始直播 发送短信 邮件
      */
@@ -459,9 +513,15 @@ class TencentSMSWorker extends BaseWorker implements Worker
      * 生成短连接
      * @param $ID 直播间ID
      */
-    public function shortConnection($ID = '' ) {
+    public function shortConnection($ID = '', $roomUrl = 1 ) {
         if(!$ID) { return false;}
-        $room_url  = 'https://etest.eovobochina.com/index.php?app=exhibition/info&id=' . $ID . '&status=0';
+        if($roomUrl == 1) {
+            $room_url  = 'https://etest.eovobochina.com/index.php?app=exhibition/info&id=' . $ID . '&status=0';
+        } else if($roomUrl == 2) {
+            $room_url  = 'https://testn.eovobochina.com/myMeetingDetails?meetId='. $ID;
+        } else if($roomUrl == 3) {
+            $room_url  = 'https://testn.eovobochina.com/message';
+        } 
         $token =  self::token();
         if(!$token) { return false;}
         //开始请求
@@ -528,6 +588,9 @@ class TencentSMSWorker extends BaseWorker implements Worker
             $sql  = 'SELECT peu.user_id as user_id  FROM p46_exhibition_room AS per JOIN p46_exhibition_user AS  peu ON per.uid = peu.uid   WHERE  per.rid = ' . $ID . ' ';
         } else if($type == 2) {
             $sql  = "SELECT  mobile_phone,email,first_name, user_name,ccode  FROM  p46_appointment AS pa  JOIN p46_users  AS pu ON pa.from_id = pu.user_id WHERE pa.statu = 1 AND  pa.to_id = '$ID'";
+        } else if($type == 3) {
+            //用户信息
+            $sql  = "SELECT  mobile_phone,email,first_name, user_name,ccode  FROM  p46_users  WHERE user_id = '$ID'";
         }
         $rs = $this->pdo->query($sql);
         $rs->setFetchMode(\PDO::FETCH_ASSOC);
@@ -602,6 +665,60 @@ class TencentSMSWorker extends BaseWorker implements Worker
     }
     
 
+    /**
+     * 发送短信服务执行 配对会议即将开始5分钟
+     */
+    public function actionTaskDataSMSMeetBegin($data_info = '') {
+        $data = $data_info['data'];
+        //数据库数据ID
+        $ID           = $data['id'];
+        $mobile_phone = ! empty( $data['mobile_phone'] ) ? $data['mobile_phone'] : ''; 
+        $email        = ! empty( $data['email'] ) ? $data['email'] : ''; 
+        $first_name   = ! empty( $data['first_name'] ) ? $data['first_name'] : ''; 
+        $user_name    = ! empty( $data['user_name'] ) ? $data['user_name'] : ''; 
+        $ccode        = ! empty( $data['ccode'] ) ? $data['ccode'] : ''; 
+        $meetId       = ! empty( $data['meet_id'] ) ? $data['meet_id'] : ''; 
+        
+        $activity = self::shortConnection($meetId, 2);
+        $curl_data = [
+            'mobile_phone' => $mobile_phone,
+            'token'        => md5(md5($mobile_phone . $this->config['token'])),
+            'validity'     => time() + 300,
+            'activity'     => $activity,
+            'template'     => 36, //33模板ID
+            'ccode'        => $ccode, //手机号国家编码
+        ];
+        // 发送验证码接口
+        $curlInfo = self::curls($curl_data,'phone_curl');
+        //邮件发送
+        $name = $first_name ? $first_name : $user_name;
+        if($email && $name ) {
+            $subject = $this->config['subject'];
+            $content = '尊敬的用户，您配对成功的会议邀请即将开始！请点击:' . $activity;
+            $send_mail =  self::send_mail($name, $email, $subject, $content);
+        }
+        if( $curlInfo['code'] == 200 ) {
+            self::updateAudioTranslationMeet($ID);
+        }
+
+        return true;
+    }
+
+    /**
+     * 更新表数据
+     */
+    public function updateAudioTranslationMeet( $Id = '' , $TaskId = 1) {
+        if(!$Id) { return false;}
+        $where = '';
+        $TaskId = intval($TaskId);
+        if($TaskId) {
+            $where .= 'is_success = '.  $TaskId ;
+        }
+        $this->pdo->query("SET NAMES utf8");
+        $sql  = "UPDATE `p46_appointment_meet_info` SET $where WHERE `id`=:id";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute(array(':id' => $Id));
+    }
     /**
      * 请求触发短信接口
      */
