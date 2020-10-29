@@ -135,8 +135,16 @@ class TencentSMSWorker extends BaseWorker implements Worker
      * userToId
     */
     public function SendChinaInfo ($meetId,$userID) {
-        $send_mail = '';
+        $send_mail = $nameEn = $selectedDay = $delete_date = '';
         $userInfo =  self::selectAppointmentInfo($userID, 3); //关联查出我的收到预约列表人数
+
+        $meetData =  self::selectAppointmentInfo($meetId, 4); //会议信息
+        if($meetData) {
+            $meetInfo = $meetData[0];
+            $nameEn       = $meetInfo['nameEn'];
+            $selectedDay  = date('Y-m-d', $meetInfo['add_open_time'] );
+            $delete_date  = date('H:i', $meetInfo['add_open_time'] ).'-'. date('H:i', $meetInfo['add_stop_time'] );
+        }    
         if($userInfo) {
             $value = $userInfo[0];
             $sendUrl = 'https://etest.eovobochina.com/index.php?app=User/automaticLogin&userId='.$userID.'&meetId='.$meetId;
@@ -147,17 +155,25 @@ class TencentSMSWorker extends BaseWorker implements Worker
             //邮件发送
             $name = $first_name ? $first_name : $user_name;
             if($email && $name ) {
-                $subject = $this->config['subject'];
-                $content = 'Dear , 
+                $subject = '[2020 China Brand Online Fair] You have a new appointment';
+                $content = 'Dear '.$name.',<br/><br/>
 
-                You have a new meeting with an overseas company at the China Brand Fair Online. Please find below the summary of your appointments. Please click <a href="'.$activity.'">HERE</a>. 
-                
-                Looking forward to meeting you at the China Brand Fair Online: November 23-27, 2020.
-                
-                We sincerely wish you a successful exhibition and fruitful new business connections. 
-                Yours truly CECZ Central-European Trade and Logistics Cooperation Zone';
-                $send_mail =  self::send_mail($name, $email, $subject, $content,1);
-                file_put_contents('SendChinaInfo.txt',$send_mail );
+                You have a new meeting with an overseas company at the 2020 China Brand Online Fair. Please find below the summary of your appointments: <br/><br/>
+
+                Buyer: '.$nameEn.'. <br/><br/>
+                Date：'.$selectedDay.' <br/><br/>
+                Budapest Time: '.self::hours_info_all($delete_date,2).' <br/><br/>
+                Beijing Time: '.$delete_date.' <br/><br/>
+
+
+                Please click  <a href="'.$activity.'">HERE</a> to view your appointment list. <br/>
+
+                Looking forward to meeting you at the 2020 China Brand Online Fair: November 23-27, 2020.<br/><br/>
+
+                We sincerely wish you a successful exhibition and fruitful new business connections. <br/><br/>
+                Yours truly <br/><br/>
+                CECZ Central-European Trade and Logistics Cooperation Zone';
+                $send_mail =  self::send_mail_CECZ($name, $email, $subject, $content);
             }
         }
         return $send_mail;
@@ -169,6 +185,16 @@ class TencentSMSWorker extends BaseWorker implements Worker
      * userMyId
      */
     public function SendWaiFanInfo ($meetId,$userID) {
+        $send_mail = $nameEn = $selectedDay = $delete_date = '';
+        $userInfo =  self::selectAppointmentInfo($userID, 3); //关联查出我的收到预约列表人数
+
+        $meetData =  self::selectAppointmentInfo($meetId, 4); //会议信息
+        if($meetData) {
+            $meetInfo = $meetData[0];
+            $nameEn       = $meetInfo['nameEn'];
+            $selectedDay  = date('Y-m-d', $meetInfo['add_open_time'] );
+            $delete_date  = date('H:i', $meetInfo['add_open_time'] ).'-'. date('H:i', $meetInfo['add_stop_time'] );
+        }    
         $userInfo =  self::selectAppointmentInfo($userID, 3); //关联查出我的收到预约列表人数
         if($userInfo) {
             $value = $userInfo[0];
@@ -180,15 +206,22 @@ class TencentSMSWorker extends BaseWorker implements Worker
             //邮件发送
             $name = $first_name ? $first_name : $user_name;
             if($email && $name ) {
-                $subject = $this->config['subject'];
-                $content = 'Dear , 
-                Thank you for making appointments with your Chinese partner companies at the China Brand Fair 2020 Online. Please find below the summary of your appointments. Should you wish to change an appointment or make a new one, please click <a href="'.$activity.'">HERE</a>. 
-                Looking forward to meeting you at the China Brand Fair Online: November 23-27, 2020.
-                
-                We sincerely wish you a successful exhibition and fruitful new business connections. 
-                Yours truly CECZ Central-European Trade and Logistics Cooperation Zone';
-                $send_mail =  self::send_mail($name, $email, $subject, $content,1);
-                file_put_contents('SendWaiFanInfo.txt',$send_mail );
+                $subject = '[2020 China Brand Online Fair] Appointments confirmation';
+                $content = 'Dear '.$name.', <br/><br/>
+                Thank you for making appointments with your Chinese partner companies at the 2020 China Brand Online Fair. Please find below the summary of your appointments: <br/><br/>
+                Supplier: '.$nameEn.'. <br/><br/>
+                Date：'.$selectedDay.' <br/><br/>
+                Budapest Time: '.self::hours_info_all($delete_date,2).' <br/><br/>
+                Beijing Time: '.$delete_date.' <br/><br/>
+                Should you wish to change an appointment or make a new one, please click <a href="'.$activity.'">HERE</a> . <br/><br/>
+                Looking forward to meeting you at the 2020 China Brand Online Fair: November 23-27, 2020.<br/><br/>
+
+                We sincerely wish you a successful exhibition and fruitful new business connections. <br/><br/>
+
+
+                Yours truly <br/>
+                CECZ Central-European Trade and Logistics Cooperation Zone ';
+                $send_mail =  self::send_mail_CECZ($name, $email, $subject, $content);
             }
         }
         return true;
@@ -324,6 +357,10 @@ class TencentSMSWorker extends BaseWorker implements Worker
         } else if($type == 3) {
             //用户信息
             $sql  = "SELECT  mobile_phone,email,first_name, user_name,ccode  FROM  p46_users  WHERE user_id = '$ID'";
+        } else if($type == 4) {
+            $sql = 'SELECT ua.name__en as nameEn, ni.add_open_time, ni.add_stop_time FROM p46_user_apply as ua JOIN p46_negotiation_info as ni ON ua.id = ni.exhibitors_id WHERE ni.id = ' . $ID;
+        } else if($type == 5) {
+            $sql = 'SELECT name__en as nameEn  FROM p46_user_apply  WHERE id = ' . $ID;
         }
         $rs = $this->pdo->query($sql);
         $rs->setFetchMode(\PDO::FETCH_ASSOC);
@@ -427,17 +464,13 @@ class TencentSMSWorker extends BaseWorker implements Worker
                 //邮件发送
                 $name = $first_name ? $first_name : $user_name;
                 if($email && $name ) {
-                    $subject = $this->config['subject'];
-                    $content = 'Dear , 
+                    $subject = '[2020 China Brand Online Fair] Reminder of upcoming appointment';
+                    $content = 'Dear '.$name.',<br/><br/>
 
-                    Your next video meeting starts in 10 minutes, please click here to start the video conference: <a href="'.$activity.'">HERE</a>
-                    
-                    
-                    
-                    
-                    Yours truly
+                    Your next video meeting starts in 10 minutes, please click <a href="'.$activity.'">HERE</a> to start the video conference:<br/><br/>
+                    Yours truly<br/>
                     The Organisers';
-                    $send_mail =  self::send_mail($name, $email, $subject, $content,1);
+                    $send_mail =  self::send_mail_CECZ($name, $email, $subject, $content);
                 }
             }
         }
@@ -512,22 +545,6 @@ class TencentSMSWorker extends BaseWorker implements Worker
         // Instantiation and passing `true` enables exceptions
         $mail = new PHPMailer(true); //PHPMailer对象
     
-        /*$config = [
-            'subject'  => '【爱欧沃伯】邀请通知',
-            'subject_title'  => '【爱欧沃伯】',
-            'smtp_host' => 'smtp.exmail.qq.com',
-            'smtp_port' => '465',
-            'smtp_user' => 'sender@yiweihy.com',
-            'smtp_pass' => 'yr5mWg5mc3MhLk4a',
-            'smtp_mail' => 'sender@yiweihy.com',
-        ];
-        $host          = $config['smtp_host'];
-        $port          = $config['smtp_port'];
-        $user          = $config['smtp_user'];
-        $pass          = $config['smtp_pass'];
-        $subject       = $config['subject'];
-        $subject_title = $config['subject_title'];
-        $smtp_mail     = $config['smtp_mail'];*/
         $host = $this->config['smtp_host'];
         $port = $this->config['smtp_port'];
         $user = $this->config['smtp_user'];
@@ -559,7 +576,46 @@ class TencentSMSWorker extends BaseWorker implements Worker
             $result = $mail->Send() ? '200' : $mail->ErrorInfo;
             return $result;
         } catch (Exception $e) {
-            echo "Message could not be sent. Mailer Error: {$mail->ErrorInfo}";
+            return true;
+        }
+    }
+
+
+    function send_mail_CECZ($name, $email, $subject, $content, $type = 0, $notification=false) {
+        $mail = new PHPMailer(true); //PHPMailer对象
+    
+        $host = $this->config['smtp_host'];
+        $port = $this->config['smtp_port'];
+        $user = $this->config['smtp_user'];
+        $pass = $this->config['smtp_pass'];
+        // $subject =  $this->config['subject'];
+        $subject_title =  $this->config['subject_title'];
+        $smtp_mail     =  $this->config['smtp_mail'];
+        try {
+            //Server settings
+            $mail->CharSet = "UTF-8";	                                //设定邮件编码，默认ISO-8859-1，如果发中文此项必须设置，否则乱码
+            $mail->SMTPDebug = 0;                                       // 启用 SMTP 验证功能
+            $mail->isSMTP();                                            // 设定使用SMTP服务
+            $mail->Host       = $host;                                  // Set the SMTP server to send through
+            $mail->SMTPAuth   = true;                                   // 启用 SMTP 验证功能
+            $mail->Username   = $user;                                  // SMTP username
+            $mail->Password   = $pass;                                  // SMTP password
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;            // Enable TLS encryption; `PHPMailer::ENCRYPTION_SMTPS` encouraged
+            $mail->Port       = $port;                                  // TCP port to connect to, use 465 for `PHPMailer::ENCRYPTION_SMTPS` above
+    
+            //Recipients
+            $mail->setFrom($smtp_mail, 'CECZ');
+            $mail->addAddress($email, $name);                    // Add a recipient
+    
+            // Content
+            $mail->isHTML(true);                                  // Set email format to HTML
+            $mail->Subject = $subject;
+            $mail->Body    = $content;
+    
+            $result = $mail->Send() ? '200' : $mail->ErrorInfo;
+            return $result;
+        } catch (Exception $e) {
+            return true;
         }
     }
        
@@ -574,36 +630,96 @@ class TencentSMSWorker extends BaseWorker implements Worker
         $userToId       = ! empty( $data['userToId'] ) ? $data['userToId'] : '';//用户ID 
         $selectedDay    = ! empty( $data['selectedDay'] ) ? $data['selectedDay'] : '';//日期
         $deleteDate     = ! empty( $data['deleteDate'] ) ? $data['deleteDate'] : '';//时间段 
-        $userInfoAll    = [
-            $userMyId,
-            $userToId,
-        ];
-        for ($i=0; $i < count($userInfoAll); $i++) { 
-            $userID = $userInfoAll[$i];
-            if( !is_numeric($userID) ) {
-                continue;
-            }
-            $userInfo =  self::selectAppointmentInfo($userID, 3); //关联查出我的收到预约列表人数
-            if($userInfo) {
-                $value = $userInfo[0];
-                $email        = ! empty( $value['email'] )        ? $value['email'] : ''; 
-                $first_name   = ! empty( $value['first_name'] )   ? $value['first_name'] : ''; 
-                $user_name    = ! empty( $value['user_name'] )    ? $value['user_name'] : ''; 
-                //邮件发送
-                $name = $first_name ? $first_name : $user_name;
-                if($email && $name ) {
-                    $subject = $this->config['subject'];
-                    $content = 'Dear,
-
-                    Your video meeting at ('.$selectedDay.', '.$deleteDate.') was cancelled.
-                    
-                    Yours truly
-                    The Organisers';
-                    $send_mail =  self::send_mail($name, $email, $subject, $content,1);
-                }
-            }
-        }    
+        $exhibitorsId     = ! empty( $data['exhibitorsId'] ) ? $data['exhibitorsId'] : '';//展示ID 
+        self::ChinaSendCancelEmail($userToId,$exhibitorsId,$selectedDay,$deleteDate);//中方发送取消
+        self::WaiFanSendCancelEmail($userMyId,$exhibitorsId,$selectedDay,$deleteDate);//外方发送取消
         return true;
+    }
+    /**
+     * 中方发送取消邮件
+     */
+    public function ChinaSendCancelEmail($userID, $exhibitorsId = '', $selectedDay = '', $delete_date = '') {
+        $send_mail = $nameEn = '';
+        $userInfo =  self::selectAppointmentInfo($userID, 3); //关联查出我的收到预约列表人数
+
+        $exhibitorsInfo =  self::selectAppointmentInfo($exhibitorsId, 5); //展示信息
+        $nameEn = !empty($exhibitorsInfo) ? $exhibitorsInfo[0]['nameEn'] : '';
+
+        if($userInfo) {
+            $value = $userInfo[0];
+            $email        = ! empty( $value['email'] )        ? $value['email'] : ''; 
+            $first_name   = ! empty( $value['first_name'] )   ? $value['first_name'] : ''; 
+            $user_name    = ! empty( $value['user_name'] )    ? $value['user_name'] : ''; 
+            //邮件发送
+            $name = $first_name ? $first_name : $user_name;
+            if($email && $name ) {
+                $subject = '[2020 China Brand Online Fair] Appointment cancellation';
+                $content = 'Dear '.$name.',<br/><br/>
+
+                Your appointment has been cancelled by the buyer:<br/><br/>
+
+                Buyer: '.$nameEn.'. <br/><br/>
+                Date：'.$selectedDay.' <br/><br/>
+                Budapest Time: '.self::hours_info_all($delete_date,2).' <br/><br/>
+                Beijing Time: '.$delete_date.' <br/><br/>
+              
+                Yours truly <br/><br/>
+                The Organisers';
+                $send_mail =  self::send_mail_CECZ($name, $email, $subject, $content);
+            }
+        }
+        return $send_mail;
+    }
+
+     /**
+     * 外方发送取消邮件
+     */
+    public function WaiFanSendCancelEmail($userID, $exhibitorsId = '', $selectedDay = '', $delete_date = '') {
+        $send_mail = $nameEn = '';
+        $userInfo =  self::selectAppointmentInfo($userID, 3); //关联查出我的收到预约列表人数
+
+        $exhibitorsInfo =  self::selectAppointmentInfo($exhibitorsId, 5); //展示信息
+        $nameEn = !empty($exhibitorsInfo) ? $exhibitorsInfo[0]['nameEn'] : '';
+        if($userInfo) {
+            $value = $userInfo[0];
+            $email        = ! empty( $value['email'] )        ? $value['email'] : ''; 
+            $first_name   = ! empty( $value['first_name'] )   ? $value['first_name'] : ''; 
+            $user_name    = ! empty( $value['user_name'] )    ? $value['user_name'] : ''; 
+            //邮件发送
+            $name = $first_name ? $first_name : $user_name;
+            if($email && $name ) {
+                $subject = '[2020 China Brand Online Fair] Appointment cancellation';
+                $content = 'Dear '.$name.',<br/><br/>
+                Your have successfully cancelled your appointment :<br/><br/>
+                Supplier: '.$nameEn.'. <br/><br/>
+                Date：'.$selectedDay.' <br/><br/>
+                Budapest Time: '.self::hours_info_all($delete_date,2).' <br/><br/>
+                Beijing Time: '.$delete_date.' <br/><br/>
+                Yours truly<br/>
+                The Organisers';
+                $send_mail =  self::send_mail_CECZ($name, $email, $subject, $content);
+            }
+        }
+        return $send_mail;
+    }
+
+    public function hours_info_all($key = '',$flag = 1) {
+        $data = [
+            '15:30-16:00',
+            '16:00-16:30',
+            '16:30-17:00',
+            '17:00-17:30',
+            '17:30-18:00',
+        ];
+
+        $data_buda = [
+            '15:30-16:00' => '08:30-09:00',
+            '16:00-16:30' => '09:00-09:30',
+            '16:30-17:00' => '09:30-10:00',
+            '17:00-17:30' => '10:00-10:30',
+            '17:30-18:00' => '10:30-11:00',
+        ];
+        return $flag == 2 ? $data_buda[$key] : $data;
     }
 
     //  关闭链接
