@@ -71,9 +71,9 @@ class TencentSMSWorker extends BaseWorker implements Worker
                 //初始发送短信接口
                 $res = $this->actionTaskDataSMSAbout($data_info);
                 if ($res == 200) {
-                    $msg = 'dwk完成处理-taskDataSMSAbout--短信发送-成功';
+                    $msg = 'dwk完成处理-taskDataSMSAbout--直播或者会议开始短信发送-成功';
                 } else {
-                    $msg = 'dwk完成处理-taskDataSMSAbout--短信发送-失败' . $res;
+                    $msg = 'dwk完成处理-taskDataSMSAbout--直播或者会议开始短信发送-失败' . $res;
                 }
             } else if ($data_info['type'] == 'taskDataSMSSendMeet') {//创建会议发起预约
                 //初始发送短信接口
@@ -232,6 +232,63 @@ class TencentSMSWorker extends BaseWorker implements Worker
      */
     public function actionTaskDataSMSAbout($data_info = '') {
         //数据库数据ID  直播间的ID
+        $ID               = $data_info['rid'];
+        $exhibition_type  = ! empty( $data_info['exhibition_type'] ) ? $data_info['exhibition_type'] : 'exhibiton_room'; //默认直播
+        if(!$ID) { return false;}
+        $dataInfo1  = self::selectAppointmentInfo($ID, 6, $exhibition_type);//查出 web 端 p46_notice 里面的数据 条件 t_name = exhibiton_room  meet_id = $ID
+        if($dataInfo1) {
+            $activity = self::shortConnection($ID);
+            $activity_info = [
+                'exhibiton_preview' => '论坛',
+                'exhibiton_room'    => '直播间',
+            ];
+            foreach ($dataInfo1 as $key => $val) { //循环处理数据
+                $userID   =  $val['user_id'];
+                $userInfo =  self::selectAppointmentInfo($userID, 3); //用户的基本信息
+                if($userInfo) {
+                    $value = $userInfo[0];
+                    $mobile_phone = ! empty( $value['mobile_phone'] ) ? $value['mobile_phone'] : ''; 
+                    $email        = ! empty( $value['email'] )        ? $value['email'] : ''; 
+                    $first_name   = ! empty( $value['first_name'] )   ? $value['first_name'] : ''; 
+                    $user_name    = ! empty( $value['user_name'] )    ? $value['user_name'] : ''; 
+                    $ccode        = ! empty( $value['ccode'] )        ? $value['ccode'] : ''; 
+                    /*$mobile_phone = '18201058764'; 
+                    $email        = '2547977230@qq.com'; 
+                    $first_name   = '任明明'; 
+                    $user_name    = 'renmingming'; 
+                    $ccode        = 86; */
+                    $curl_data = [
+                        'mobile_phone' => $mobile_phone,
+                        'token'        => md5(md5($mobile_phone . $this->config['token'])),
+                        'validity'     => time() + 300,
+                        'activity'     => $activity,
+                        'template'     => 34, //34模板ID
+                        'ccode'        => $ccode, //手机号国家编码
+                    ];
+                    // 发送验证码接口
+                    // $curlInfo = self::curls($curl_data,'phone_curl');
+                    //邮件发送
+                    $name = $first_name ? $first_name : $user_name;
+                    if($email && $name ) {
+                        // $subject = $this->config['subject'];
+                        // $content = '尊敬的用户，您预约的直播间即将开始！请点击:' . $activity;
+                        // $send_mail =  self::send_mail($name, $email, $subject, $content);
+                        $subject = '直播';
+                        $content = 'Dear '.$name.',<br/><br/>
+    
+                        Your next video meeting starts in 10 minutes, please click <a href="'.$activity.'">HERE</a> to start the video conference:<br/><br/>
+                        Yours truly<br/>
+                        The Organisers';
+                        $send_mail =  self::send_mail_CECZ($name, $email, $subject, $content);
+                    }
+                }
+            }
+        }
+        
+        return true;
+    }
+    /*public function actionTaskDataSMSAbout($data_info = '') {
+        //数据库数据ID  直播间的ID
         $ID        = $data_info['rid'];
         if(!$ID) { return false;}
         $dataInfo  = self::selectAppointmentInfo($ID, 1);//查出直播间所对应的user_id  条件是 p46_exhibition_room 的 rid
@@ -251,7 +308,7 @@ class TencentSMSWorker extends BaseWorker implements Worker
                     $first_name   = '任明明'; 
                     $user_name    = 'renmingming'; 
                     $ccode        = 86; */
-                    $curl_data = [
+                    /*$curl_data = [
                         'mobile_phone' => $mobile_phone,
                         'token'        => md5(md5($mobile_phone . $this->config['token'])),
                         'validity'     => time() + 300,
@@ -272,7 +329,7 @@ class TencentSMSWorker extends BaseWorker implements Worker
             }
         }
         return true;
-    }
+    }*/
     /**
      * 生成短连接
      * @param $ID 直播间ID
@@ -347,7 +404,7 @@ class TencentSMSWorker extends BaseWorker implements Worker
     /**
      * 查询表数据 有关开直播预约的信息处理
      */
-    public function selectAppointmentInfo($ID = '', $type = '') {
+    public function selectAppointmentInfo($ID = '', $type = '', $p46_notice_t_name = 'exhibiton_room') {
         if(!$ID) { return false;}
         $this->pdo->query("SET NAMES utf8");
         if($type == 1) {
@@ -361,6 +418,8 @@ class TencentSMSWorker extends BaseWorker implements Worker
             $sql = 'SELECT ua.name__en as nameEn, ni.add_open_time, ni.add_stop_time FROM p46_user_apply as ua JOIN p46_negotiation_info as ni ON ua.id = ni.exhibitors_id WHERE ni.id = ' . $ID;
         } else if($type == 5) {
             $sql = 'SELECT name__en as nameEn  FROM p46_user_apply  WHERE id = ' . $ID;
+        } else if($type == 6) {
+            $sql = "SELECT user_id FROM p46_notice  WHERE meet_id = $ID  AND t_name = $p46_notice_t_name";
         }
         $rs = $this->pdo->query($sql);
         $rs->setFetchMode(\PDO::FETCH_ASSOC);
@@ -399,20 +458,25 @@ class TencentSMSWorker extends BaseWorker implements Worker
             'ccode'        => $ccode, //手机号国家编码
         ];
         // 发送验证码接口
-        $curlInfo = self::curls($curl_data,'phone_curl');
+        // $curlInfo = self::curls($curl_data,'phone_curl');
         //邮件发送
         $name = $first_name ? $first_name : $user_name;
         if($email && $name ) {
-            $subject = $this->config['subject'];
-            $content = '尊敬的用户，您预约的'.$activity.'还有2分钟开始！';
-            $send_mail =  self::send_mail($name, $email, $subject, $content);
-            // if($send_mail != 'ok') {
-            //     file_put_contents('send_mail_fail.txt', $send_mail);
-            // } 
+            // $subject = $this->config['subject'];
+            // $content = '尊敬的用户，您预约的'.$activity.'还有2分钟开始！';
+            // $send_mail =  self::send_mail($name, $email, $subject, $content);
+            $subject = '直播即将开始';
+            $content = 'Dear '.$name.',<br/><br/>
+
+            Your next video meeting starts in 10 minutes, please click <a href="'.$activity.'">HERE</a> to start the video conference:<br/><br/>
+            Yours truly<br/>
+            The Organisers';
+            $send_mail =  self::send_mail_CECZ($name, $email, $subject, $content);
+           
         }
-        if( $curlInfo['code'] == 200 ) {
+        // if( $curlInfo['code'] == 200 ) {
             self::updateAudioTranslation($ID);
-        }
+        // }
 
         return true;
     }
