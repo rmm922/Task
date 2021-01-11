@@ -20,9 +20,9 @@ use PHPMailer\PHPMailer\Exception;
 define('SMTP_STATUS_NOT_CONNECTED', 1);
 define('SMTP_STATUS_CONNECTED',     2);
 /**
- * 邮件发送基类 河北
+ * 邮件发送基类 Efair
  */
-class HebeiTencentSMSWorker extends BaseWorker implements Worker
+class EfairTencentSMSWorker extends BaseWorker implements Worker
 {
     private $config;
     public  $pdo;
@@ -63,41 +63,41 @@ class HebeiTencentSMSWorker extends BaseWorker implements Worker
                 //初始发送短信接口
                 $res = $this->actionTaskDataSMS($data_info);
                 if ($res == 200) {
-                    $msg = 'dwk完成处理-taskDataSMS--河北短信发送-成功';
+                    $msg = 'dwk完成处理-taskDataSMS--主网站Efair短信发送-成功';
                 } else {
-                    $msg = 'dwk完成处理-taskDataSMS--河北短信发送-失败' . $res;
+                    $msg = 'dwk完成处理-taskDataSMS--主网站Efair短信发送-失败' . $res;
                 }
             } else if ($data_info['type'] == 'taskDataSMSAbout') {
                 //初始发送短信接口
                 $res = $this->actionTaskDataSMSAbout($data_info);
                 if ($res == 200) {
-                    $msg = 'dwk完成处理-taskDataSMSAbout--河北直播或者会议开始短信发送-成功';
+                    $msg = 'dwk完成处理-taskDataSMSAbout--主网站Efair直播或者会议开始短信发送-成功';
                 } else {
-                    $msg = 'dwk完成处理-taskDataSMSAbout--河北直播或者会议开始短信发送-失败' . $res;
+                    $msg = 'dwk完成处理-taskDataSMSAbout--主网站Efair直播或者会议开始短信发送-失败' . $res;
                 }
             } else if ($data_info['type'] == 'taskDataSMSSendMeet') {//创建会议发起预约
                 //初始发送短信接口
                 $res = $this->actionTaskDataSMSMeetSend($data_info);
                 if ($res == 200) {
-                    $msg = 'dwk完成处理-taskDataSMSAboutMeetSend--河北初次邮件短信发送-成功';
+                    $msg = 'dwk完成处理-taskDataSMSAboutMeetSend--主网站Efair初次邮件短信发送-成功';
                 } else {
-                    $msg = 'dwk完成处理-taskDataSMSAboutMeetSend--河北初次邮件短信发送-失败' . $res;
+                    $msg = 'dwk完成处理-taskDataSMSAboutMeetSend--主网站Efair初次邮件短信发送-失败' . $res;
                 }
             } else if( $data_info['type'] == 'taskDataSMSSendMeetBegin' ) {//创建会议发起 配对成功 即将开始    
                 //初始发送短信接口
                 $res = $this->actionTaskDataSMSMeetBegin($data_info);
                 if ($res == 200) {
-                    $msg = 'dwk完成处理-taskDataSMSMeetBegin--河北即将开始邮件短信发送-成功';
+                    $msg = 'dwk完成处理-taskDataSMSMeetBegin--主网站Efair即将开始邮件短信发送-成功';
                 } else {
-                    $msg = 'dwk完成处理-taskDataSMSMeetBegin--河北即将开始邮件短信发送-失败' . $res;
+                    $msg = 'dwk完成处理-taskDataSMSMeetBegin--主网站Efair即将开始邮件短信发送-失败' . $res;
                 }
             } else if( $data_info['type'] == 'taskDataSMSSendMeetCancel' ) {//创建会议发起 配对成功 即将开始    
                 //初始发送短信接口
                 $res = $this->actionTaskDataSMSMeetSendCancel($data_info);
                 if ($res == 200) {
-                    $msg = 'dwk完成处理-taskDataSMSSendMeetCancel--河北取消邮件和短信发送-成功';
+                    $msg = 'dwk完成处理-taskDataSMSSendMeetCancel--主网站Efair取消邮件和短信发送-成功';
                 } else {
-                    $msg = 'dwk完成处理-taskDataSMSSendMeetCancel--河北取消邮件和短信发送-失败' . $res;
+                    $msg = 'dwk完成处理-taskDataSMSSendMeetCancel--主网站Efair取消邮件和短信发送-失败' . $res;
                 }
             } else {
                 $msg  = '参数错误';
@@ -116,7 +116,7 @@ class HebeiTencentSMSWorker extends BaseWorker implements Worker
         }
     }
 
-    const hebeiurl = 'https://hebei.eovobo.com/';
+    const efairurl = 'https://hebei.eovobo.com/';
     /**
      * 创建会议 发起预约短信内容
      */
@@ -148,7 +148,7 @@ class HebeiTencentSMSWorker extends BaseWorker implements Worker
         }    
         if($userInfo) {
             $value = $userInfo[0];
-            $sendUrl =  self::hebeiurl.'index.php?app=User/automaticLogin&userId='.$userID.'&meetId='.$meetId;
+            $sendUrl =  self::efairurl.'index.php?app=User/automaticLogin&userId='.$userID.'&meetId='.$meetId;
             $activity = self::shortConnection($sendUrl, 4);//短连链接
             $email        = ! empty( $value['email'] )        ? $value['email'] : ''; 
             $first_name   = ! empty( $value['first_name'] )   ? $value['first_name'] : ''; 
@@ -156,10 +156,10 @@ class HebeiTencentSMSWorker extends BaseWorker implements Worker
             //邮件发送
             $name = $first_name ? $first_name : $user_name;
             if($email && $name ) {
-                $subject = '[2020 Hebei Brand Online Promotion] You have a new appointment';
+                $subject = '[2021 EFAIR Brand Online Promotion] You have a new appointment';
                 $content = 'Dear '.$name.',<br/><br/>
 
-                You have a new meeting with an overseas company at the 2020 Hebei Brand Online Promotion. Please find below the summary of your appointments: <br/><br/>
+                You have a new meeting with an overseas company at the 2021 EFAIR Brand Online Promotion. Please find below the summary of your appointments: <br/><br/>
 
                 Buyer: '.$nameEn.'. <br/><br/>
                 Date：'.$selectedDay.' <br/><br/>
@@ -170,11 +170,11 @@ class HebeiTencentSMSWorker extends BaseWorker implements Worker
 
                 Please click  <a href="'.$activity.'">HERE</a> to view your appointment list. <br/>
 
-                Looking forward to meeting you at the 2020 Hebei Brand Online Promotion: November 28 -- December 1, 2020.<br/><br/>
+                Looking forward to meeting you at the 2021 EFAIR Brand Online Promotion: November 28 -- December 1, 2021.<br/><br/>
 
                 We sincerely wish you a successful exhibition and fruitful new business connections. <br/><br/>
                 Yours truly <br/><br/>
-                Hebei Brand Online Promotion';
+                EFAIR Brand Online Promotion';
                 $send_mail =  self::send_mail_CECZ($name, $email, $subject, $content);
             }
         }
@@ -200,7 +200,7 @@ class HebeiTencentSMSWorker extends BaseWorker implements Worker
         $userInfo =  self::selectAppointmentInfo($userID, 3); //关联查出我的收到预约列表人数
         if($userInfo) {
             $value = $userInfo[0];
-            $sendUrl  = self::hebeiurl.'index.php?app=User/automaticLogin&userId='.$userID.'&meetId='.$meetId;
+            $sendUrl  = self::efairurl.'index.php?app=User/automaticLogin&userId='.$userID.'&meetId='.$meetId;
             $activity = self::shortConnection($sendUrl, 4);//短连链接
             $email        = ! empty( $value['email'] )        ? $value['email'] : ''; 
             $first_name   = ! empty( $value['first_name'] )   ? $value['first_name'] : ''; 
@@ -208,22 +208,22 @@ class HebeiTencentSMSWorker extends BaseWorker implements Worker
             //邮件发送
             $name = $first_name ? $first_name : $user_name;
             if($email && $name ) {
-                $subject = '[2020 Hebei Brand Online Promotion] Appointments confirmation';
+                $subject = '[2021 EFAIR Brand Online Promotion] Appointments confirmation';
                 $content = 'Dear '.$name.', <br/><br/>
-                Thank you for making appointments with your Chinese partner companies at the 2020 Hebei Brand Online Promotion. Please find below the summary of your appointments: <br/><br/>
+                Thank you for making appointments with your Chinese partner companies at the 2021 EFAIR Brand Online Promotion. Please find below the summary of your appointments: <br/><br/>
                 Supplier: '.$nameEn.'. <br/><br/>
                 Date：'.$selectedDay.' <br/><br/>
                 India   Time: '.self::hours_info_all($delete_date,3).' <br/><br/>
                 German  Time: '.self::hours_info_all($delete_date,2).' <br/><br/>
                 Beijing Time: '.$delete_date.' <br/><br/>
                 Should you wish to change an appointment or make a new one, please click <a href="'.$activity.'">HERE</a> . <br/><br/>
-                Looking forward to meeting you at the 2020 Hebei Brand Online Promotion: November 28 -- December 1, 2020.<br/><br/>
+                Looking forward to meeting you at the 2021 EFAIR Brand Online Promotion: November 28 -- December 1, 2021.<br/><br/>
 
                 We sincerely wish you a successful exhibition and fruitful new business connections. <br/><br/>
 
 
                 Yours truly <br/>
-                Hebei Brand Online Promotion';
+                EFAIR Brand Online Promotion';
                 $send_mail =  self::send_mail_CECZ($name, $email, $subject, $content);
             }
         }
@@ -337,11 +337,11 @@ class HebeiTencentSMSWorker extends BaseWorker implements Worker
     public function shortConnection($ID = '', $roomUrl = 1 ) {
         if(!$ID) { return false;}
         if($roomUrl == 1) {
-            $room_url  = self::hebeiurl.'index.php?app=exhibition/info&id=' . $ID . '&status=0';
+            $room_url  = self::efairurl.'index.php?app=exhibition/info&id=' . $ID . '&status=0';
         } else if($roomUrl == 2) {
-            $room_url  = self::hebeiurl.'index.php?app=user/meeting_details&meetId='. $ID;
+            $room_url  = self::efairurl.'index.php?app=user/meeting_details&meetId='. $ID;
         } else if($roomUrl == 3) {
-            $room_url  = self::hebeiurl.'index.php?app=User/myMeeting_wrap';
+            $room_url  = self::efairurl.'index.php?app=User/myMeeting_wrap';
         } else if($roomUrl == 4) {
             $room_url  = $ID;
         } 
@@ -389,11 +389,11 @@ class HebeiTencentSMSWorker extends BaseWorker implements Worker
     public function shortConnection_bak($ID = '', $roomUrl = 1 ) {
         if(!$ID) { return false;}
         if($roomUrl == 1) {
-            $room_url  = self::hebeiurl.'index.php?app=exhibition/info&id=' . $ID . '&status=0';
+            $room_url  = self::efairurl.'index.php?app=exhibition/info&id=' . $ID . '&status=0';
         } else if($roomUrl == 2) {
-            $room_url  = self::hebeiurl.'index.php?app=user/meeting_details&meetId='. $ID;
+            $room_url  = self::efairurl.'index.php?app=user/meeting_details&meetId='. $ID;
         } else if($roomUrl == 3) {
-            $room_url  = self::hebeiurl.'index.php?app=User/myMeeting_wrap';
+            $room_url  = self::efairurl.'index.php?app=User/myMeeting_wrap';
         } else if($roomUrl == 4) {
             $room_url  = $ID;
         } 
@@ -569,7 +569,7 @@ class HebeiTencentSMSWorker extends BaseWorker implements Worker
             $userInfo =  self::selectAppointmentInfo($userID, 3); //关联查出我的收到预约列表人数
             if($userInfo) {
                 $value = $userInfo[0];
-                $sendUrl  = self::hebeiurl.'index.php?app=User/automaticLogin&userId='.$userID.'&meetId='.$meetId;
+                $sendUrl  = self::efairurl.'index.php?app=User/automaticLogin&userId='.$userID.'&meetId='.$meetId;
                 $activity = self::shortConnection($sendUrl, 4);//短连链接
                 $email        = ! empty( $value['email'] )        ? $value['email'] : ''; 
                 $first_name   = ! empty( $value['first_name'] )   ? $value['first_name'] : ''; 
@@ -577,7 +577,7 @@ class HebeiTencentSMSWorker extends BaseWorker implements Worker
                 //邮件发送
                 $name = $first_name ? $first_name : $user_name;
                 if($email && $name ) {
-                    $subject = '[2020 Hebei Brand Online Promotion] Reminder of upcoming appointment';
+                    $subject = '[2021 EFAIR Brand Online Promotion] Reminder of upcoming appointment';
                     $content = 'Dear '.$name.',<br/><br/>
 
                     Your next video meeting starts in 10 minutes, please click <a href="'.$activity.'">HERE</a> to start the video conference:<br/><br/>
@@ -717,7 +717,7 @@ class HebeiTencentSMSWorker extends BaseWorker implements Worker
             $mail->Port       = $port;                                  // TCP port to connect to, use 465 for `PHPMailer::ENCRYPTION_SMTPS` above
     
             //Recipients
-            $mail->setFrom($smtp_mail, 'Hebei');
+            $mail->setFrom($smtp_mail, 'EFAIR');
             $mail->addAddress($email, $name);                    // Add a recipient
     
             // Content
@@ -766,7 +766,7 @@ class HebeiTencentSMSWorker extends BaseWorker implements Worker
             //邮件发送
             $name = $first_name ? $first_name : $user_name;
             if($email && $name ) {
-                $subject = '[2020 Hebei Brand Online Promotion] Appointment cancellation';
+                $subject = '[2021 EFAIR Brand Online Promotion] Appointment cancellation';
                 $content = 'Dear '.$name.',<br/><br/>
 
                 Your appointment has been cancelled by the buyer:<br/><br/>
@@ -802,7 +802,7 @@ class HebeiTencentSMSWorker extends BaseWorker implements Worker
             //邮件发送
             $name = $first_name ? $first_name : $user_name;
             if($email && $name ) {
-                $subject = '[2020 Hebei Brand Online Promotion] Appointment cancellation';
+                $subject = '[2021 EFAIR Brand Online Promotion] Appointment cancellation';
                 $content = 'Dear '.$name.',<br/><br/>
                 Your have successfully cancelled your appointment :<br/><br/>
                 Supplier: '.$nameEn.'. <br/><br/>

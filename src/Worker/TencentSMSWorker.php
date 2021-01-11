@@ -116,6 +116,7 @@ class TencentSMSWorker extends BaseWorker implements Worker
         }
     }
 
+    const zdourl = 'https://chinabrandfair.eovobo.com/';//中东欧
     /**
      * 创建会议 发起预约短信内容
      */
@@ -147,7 +148,7 @@ class TencentSMSWorker extends BaseWorker implements Worker
         }    
         if($userInfo) {
             $value = $userInfo[0];
-            $sendUrl = 'https://etest.eovobochina.com/index.php?app=User/automaticLogin&userId='.$userID.'&meetId='.$meetId;
+            $sendUrl  = self::zdourl.'index.php?app=User/automaticLogin&userId='.$userID.'&meetId='.$meetId;
             $activity = self::shortConnection($sendUrl, 4);//短连链接
             $email        = ! empty( $value['email'] )        ? $value['email'] : ''; 
             $first_name   = ! empty( $value['first_name'] )   ? $value['first_name'] : ''; 
@@ -155,10 +156,10 @@ class TencentSMSWorker extends BaseWorker implements Worker
             //邮件发送
             $name = $first_name ? $first_name : $user_name;
             if($email && $name ) {
-                $subject = '[2020 China Brand Online Fair] You have a new appointment';
+                $subject = '[2021 China Brand Online Fair] You have a new appointment';
                 $content = 'Dear '.$name.',<br/><br/>
 
-                You have a new meeting with an overseas company at the 2020 China Brand Online Fair. Please find below the summary of your appointments: <br/><br/>
+                You have a new meeting with an overseas company at the 2021 China Brand Online Fair. Please find below the summary of your appointments: <br/><br/>
 
                 Buyer: '.$nameEn.'. <br/><br/>
                 Date：'.$selectedDay.' <br/><br/>
@@ -168,7 +169,7 @@ class TencentSMSWorker extends BaseWorker implements Worker
 
                 Please click  <a href="'.$activity.'">HERE</a> to view your appointment list. <br/>
 
-                Looking forward to meeting you at the 2020 China Brand Online Fair: November 23-27, 2020.<br/><br/>
+                Looking forward to meeting you at the 2021 China Brand Online Fair: January 18-20, 2021.<br/><br/>
 
                 We sincerely wish you a successful exhibition and fruitful new business connections. <br/><br/>
                 Yours truly <br/><br/>
@@ -198,7 +199,7 @@ class TencentSMSWorker extends BaseWorker implements Worker
         $userInfo =  self::selectAppointmentInfo($userID, 3); //关联查出我的收到预约列表人数
         if($userInfo) {
             $value = $userInfo[0];
-            $sendUrl = 'https://etest.eovobochina.com/index.php?app=User/automaticLogin&userId='.$userID.'&meetId='.$meetId;
+            $sendUrl = self::zdourl.'index.php?app=User/automaticLogin&userId='.$userID.'&meetId='.$meetId;
             $activity = self::shortConnection($sendUrl, 4);//短连链接
             $email        = ! empty( $value['email'] )        ? $value['email'] : ''; 
             $first_name   = ! empty( $value['first_name'] )   ? $value['first_name'] : ''; 
@@ -206,15 +207,15 @@ class TencentSMSWorker extends BaseWorker implements Worker
             //邮件发送
             $name = $first_name ? $first_name : $user_name;
             if($email && $name ) {
-                $subject = '[2020 China Brand Online Fair] Appointments confirmation';
+                $subject = '[2021 China Brand Online Fair] Appointments confirmation';
                 $content = 'Dear '.$name.', <br/><br/>
-                Thank you for making appointments with your Chinese partner companies at the 2020 China Brand Online Fair. Please find below the summary of your appointments: <br/><br/>
+                Thank you for making appointments with your Chinese partner companies at the 2021 China Brand Online Fair. Please find below the summary of your appointments: <br/><br/>
                 Supplier: '.$nameEn.'. <br/><br/>
                 Date：'.$selectedDay.' <br/><br/>
                 Budapest Time: '.self::hours_info_all($delete_date,2).' <br/><br/>
                 Beijing Time: '.$delete_date.' <br/><br/>
                 Should you wish to change an appointment or make a new one, please click <a href="'.$activity.'">HERE</a> . <br/><br/>
-                Looking forward to meeting you at the 2020 China Brand Online Fair: November 23-27, 2020.<br/><br/>
+                Looking forward to meeting you at the 2021 China Brand Online Fair: January 18-20, 2021.<br/><br/>
 
                 We sincerely wish you a successful exhibition and fruitful new business connections. <br/><br/>
 
@@ -273,12 +274,9 @@ class TencentSMSWorker extends BaseWorker implements Worker
                         // $subject = $this->config['subject'];
                         // $content = '尊敬的用户，您预约的直播间即将开始！请点击:' . $activity;
                         // $send_mail =  self::send_mail($name, $email, $subject, $content);
-                        $subject = '直播';
+                        $subject = '';
                         $content = 'Dear '.$name.',<br/><br/>
-    
-                        Your next video meeting starts in 10 minutes, please click <a href="'.$activity.'">HERE</a> to start the video conference:<br/><br/>
-                        Yours truly<br/>
-                        The Organisers';
+                        your booked appointment will start soon, please click <a href="'.$activity.'">HERE</a> <br/><br/>';
                         $send_mail =  self::send_mail_CECZ($name, $email, $subject, $content);
                     }
                 }
@@ -330,18 +328,70 @@ class TencentSMSWorker extends BaseWorker implements Worker
         }
         return true;
     }*/
+    
     /**
-     * 生成短连接
+     * 生成短连接新方法
      * @param $ID 直播间ID
      */
     public function shortConnection($ID = '', $roomUrl = 1 ) {
         if(!$ID) { return false;}
         if($roomUrl == 1) {
-            $room_url  = 'https://etest.eovobochina.com/index.php?app=exhibition/info&id=' . $ID . '&status=0';
+            $room_url  = self::zdourl.'index.php?app=exhibition/info&id=' . $ID . '&status=0';
         } else if($roomUrl == 2) {
-            $room_url  = 'https://etest.eovobochina.com/index.php?app=user/meeting_details&meetId='. $ID;
+            $room_url  = self::zdourl.'index.php?app=user/meeting_details&meetId='. $ID;
         } else if($roomUrl == 3) {
-            $room_url  = 'https://etest.eovobochina.com/index.php?app=User/myMeeting_wrap';
+            $room_url  = self::zdourl.'index.php?app=User/myMeeting_wrap';
+        } else if($roomUrl == 4) {
+            $room_url  = $ID;
+        } 
+        $long_url    = $room_url;
+        $now         = date('Y-m-d H:i:s',time());  
+        $expire_date = date("Y-m-d",strtotime("+10years",strtotime($now)));
+        $info        =  self::getShortUrl($long_url, $expire_date);
+        return $info;
+    }
+
+    /**
+     * @param $long_url 长网址
+     * @param $expire_date 过期日期
+     * 
+     * // 说明
+     * 1. key 获取：登录后，进入首页-导航栏-短网址-API接口可查看您的key
+     * 2. expire_date 过期日期，暂支持到年月日
+     * key： 5fd9b04984188a7d2e2d5249aa@287d876c610fc097ba5ff61067c6e175 复制
+     * 请求地址：http://api.3w.cn/api.htm
+     * 请求方式：GET
+     */
+    function getShortUrl($long_url, $expire_date)
+    {
+        $url = urlencode($long_url);
+        // $key = "5fd9b04984188a7d2e2d5249aa@287d876c610fc097ba5ff61067c6e175";
+        $key =  $this->config['getShortUrlkey'];
+        $request_url = "http://api.3w.cn/api.htm?format=json&url={$url}&key={$key}&expireDate={$expire_date}&domain=0";
+        $result_str = file_get_contents($request_url);
+        $url = "";
+        if ($result_str) {
+            $result_arr = json_decode($result_str, true);
+            if ($result_arr && $result_arr['code'] == "0") {
+                $url = $result_arr['url'];
+            }
+        }
+        return $url;
+    }
+
+
+    /**
+     * 生成短连接
+     * @param $ID 直播间ID
+     */
+    public function shortConnection_bak($ID = '', $roomUrl = 1 ) {
+        if(!$ID) { return false;}
+        if($roomUrl == 1) {
+            $room_url  = self::zdourl.'index.php?app=exhibition/info&id=' . $ID . '&status=0';
+        } else if($roomUrl == 2) {
+            $room_url  = self::zdourl.'index.php?app=user/meeting_details&meetId='. $ID;
+        } else if($roomUrl == 3) {
+            $room_url  = self::zdourl.'index.php?app=User/myMeeting_wrap';
         } else if($roomUrl == 4) {
             $room_url  = $ID;
         } 
@@ -465,12 +515,9 @@ class TencentSMSWorker extends BaseWorker implements Worker
             // $subject = $this->config['subject'];
             // $content = '尊敬的用户，您预约的'.$activity.'还有2分钟开始！';
             // $send_mail =  self::send_mail($name, $email, $subject, $content);
-            $subject = '直播即将开始';
+            $subject = '';
             $content = 'Dear '.$name.',<br/><br/>
-
-            Your next video meeting starts in 10 minutes, please click <a href="'.$activity.'">HERE</a> to start the video conference:<br/><br/>
-            Yours truly<br/>
-            The Organisers';
+            Dear participant, your booked appointment will start in 2 minutes<br/><br/>';
             $send_mail =  self::send_mail_CECZ($name, $email, $subject, $content);
            
         }
@@ -520,7 +567,7 @@ class TencentSMSWorker extends BaseWorker implements Worker
             $userInfo =  self::selectAppointmentInfo($userID, 3); //关联查出我的收到预约列表人数
             if($userInfo) {
                 $value = $userInfo[0];
-                $sendUrl = 'https://etest.eovobochina.com/index.php?app=User/automaticLogin&userId='.$userID.'&meetId='.$meetId;
+                $sendUrl  = self::zdourl.'index.php?app=User/automaticLogin&userId='.$userID.'&meetId='.$meetId;
                 $activity = self::shortConnection($sendUrl, 4);//短连链接
                 $email        = ! empty( $value['email'] )        ? $value['email'] : ''; 
                 $first_name   = ! empty( $value['first_name'] )   ? $value['first_name'] : ''; 
@@ -528,7 +575,7 @@ class TencentSMSWorker extends BaseWorker implements Worker
                 //邮件发送
                 $name = $first_name ? $first_name : $user_name;
                 if($email && $name ) {
-                    $subject = '[2020 China Brand Online Fair] Reminder of upcoming appointment';
+                    $subject = '[2021 China Brand Online Fair] Reminder of upcoming appointment';
                     $content = 'Dear '.$name.',<br/><br/>
 
                     Your next video meeting starts in 10 minutes, please click <a href="'.$activity.'">HERE</a> to start the video conference:<br/><br/>
@@ -717,7 +764,7 @@ class TencentSMSWorker extends BaseWorker implements Worker
             //邮件发送
             $name = $first_name ? $first_name : $user_name;
             if($email && $name ) {
-                $subject = '[2020 China Brand Online Fair] Appointment cancellation';
+                $subject = '[2021 China Brand Online Fair] Appointment cancellation';
                 $content = 'Dear '.$name.',<br/><br/>
 
                 Your appointment has been cancelled by the buyer:<br/><br/>
@@ -752,7 +799,7 @@ class TencentSMSWorker extends BaseWorker implements Worker
             //邮件发送
             $name = $first_name ? $first_name : $user_name;
             if($email && $name ) {
-                $subject = '[2020 China Brand Online Fair] Appointment cancellation';
+                $subject = '[2021 China Brand Online Fair] Appointment cancellation';
                 $content = 'Dear '.$name.',<br/><br/>
                 Your have successfully cancelled your appointment :<br/><br/>
                 Supplier: '.$nameEn.'. <br/><br/>
