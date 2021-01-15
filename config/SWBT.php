@@ -47,7 +47,12 @@ return [
         'hebeilikeNumber' => [
             'worker_num' => 2,
             'class' => \SWBT\Worker\HebeiLikeNumberWorker::class
-        ]
+        ],
+        //私人企业队列
+        'privateShowroomSMSTask' => [
+            'worker_num' => 2,
+            'class' => \SWBT\Worker\PrivateShowroomSMSWorker::class
+        ],
     ],
     'beanstalkd' => [
         'host' => '127.0.0.1',
