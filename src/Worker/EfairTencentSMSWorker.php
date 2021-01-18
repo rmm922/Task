@@ -59,23 +59,7 @@ class EfairTencentSMSWorker extends BaseWorker implements Worker
             //反序列化对象
             $data_info = json_decode($this->job->getData(),true);
             
-            if ($data_info['type'] == 'taskDataSMS') {
-                //初始发送短信接口
-                $res = $this->actionTaskDataSMS($data_info);
-                if ($res == 200) {
-                    $msg = 'dwk完成处理-taskDataSMS--主网站Efair短信发送-成功';
-                } else {
-                    $msg = 'dwk完成处理-taskDataSMS--主网站Efair短信发送-失败' . $res;
-                }
-            } else if ($data_info['type'] == 'taskDataSMSAbout') {
-                //初始发送短信接口
-                $res = $this->actionTaskDataSMSAbout($data_info);
-                if ($res == 200) {
-                    $msg = 'dwk完成处理-taskDataSMSAbout--主网站Efair直播或者会议开始短信发送-成功';
-                } else {
-                    $msg = 'dwk完成处理-taskDataSMSAbout--主网站Efair直播或者会议开始短信发送-失败' . $res;
-                }
-            } else if ($data_info['type'] == 'taskDataSMSSendMeet') {//创建会议发起预约
+            if ($data_info['type'] == 'taskDataSMSSendMeet') {//创建会议发起预约
                 //初始发送短信接口
                 $res = $this->actionTaskDataSMSMeetSend($data_info);
                 if ($res == 200) {
@@ -91,7 +75,7 @@ class EfairTencentSMSWorker extends BaseWorker implements Worker
                 } else {
                     $msg = 'dwk完成处理-taskDataSMSMeetBegin--主网站Efair即将开始邮件短信发送-失败' . $res;
                 }
-            } else if( $data_info['type'] == 'taskDataSMSSendMeetCancel' ) {//创建会议发起 配对成功 即将开始    
+            } else if( $data_info['type'] == 'taskDataSMSSendMeetCancel' ) {//创建会议发起 配对成功 取消会议    
                 //初始发送短信接口
                 $res = $this->actionTaskDataSMSMeetSendCancel($data_info);
                 if ($res == 200) {
@@ -116,7 +100,7 @@ class EfairTencentSMSWorker extends BaseWorker implements Worker
         }
     }
 
-    const efairurl = 'https://hebei.eovobo.com/';
+    const efairurl = 'https://www.eovobochina.com/';
     /**
      * 创建会议 发起预约短信内容
      */
@@ -230,106 +214,6 @@ class EfairTencentSMSWorker extends BaseWorker implements Worker
         return true;
     }
 
-    /**
-     * 预约直播 开始直播 发送短信 邮件
-     */
-    public function actionTaskDataSMSAbout($data_info = '') {
-        //数据库数据ID  直播间的ID
-        $ID               = $data_info['rid'];
-        $exhibition_type  = ! empty( $data_info['exhibition_type'] ) ? $data_info['exhibition_type'] : 'exhibiton_room'; //默认直播
-        if(!$ID) { return false;}
-        $dataInfo1  = self::selectAppointmentInfo($ID, 6, $exhibition_type);//查出 web 端 p46_notice 里面的数据 条件 t_name = exhibiton_room  meet_id = $ID
-        if($dataInfo1) {
-            $activity = self::shortConnection($ID);
-            $activity_info = [
-                'exhibiton_preview' => '论坛',
-                'exhibiton_room'    => '直播间',
-            ];
-            foreach ($dataInfo1 as $key => $val) { //循环处理数据
-                $userID   =  $val['user_id'];
-                $userInfo =  self::selectAppointmentInfo($userID, 3); //用户的基本信息
-                if($userInfo) {
-                    $value = $userInfo[0];
-                    $mobile_phone = ! empty( $value['mobile_phone'] ) ? $value['mobile_phone'] : ''; 
-                    $email        = ! empty( $value['email'] )        ? $value['email'] : ''; 
-                    $first_name   = ! empty( $value['first_name'] )   ? $value['first_name'] : ''; 
-                    $user_name    = ! empty( $value['user_name'] )    ? $value['user_name'] : ''; 
-                    $ccode        = ! empty( $value['ccode'] )        ? $value['ccode'] : ''; 
-                    /*$mobile_phone = '18201058764'; 
-                    $email        = '2547977230@qq.com'; 
-                    $first_name   = '任明明'; 
-                    $user_name    = 'renmingming'; 
-                    $ccode        = 86; */
-                    $curl_data = [
-                        'mobile_phone' => $mobile_phone,
-                        'token'        => md5(md5($mobile_phone . $this->config['token'])),
-                        'validity'     => time() + 300,
-                        'activity'     => $activity,
-                        'template'     => 34, //34模板ID
-                        'ccode'        => $ccode, //手机号国家编码
-                    ];
-                    // 发送验证码接口
-                    // $curlInfo = self::curls($curl_data,'phone_curl');
-                    //邮件发送
-                    $name = $first_name ? $first_name : $user_name;
-                    if($email && $name ) {
-                        // $subject = $this->config['subject'];
-                        // $content = '尊敬的用户，您预约的直播间即将开始！请点击:' . $activity;
-                        // $send_mail =  self::send_mail($name, $email, $subject, $content);
-                        $subject = '';
-                        $content = 'Dear '.$name.',<br/><br/>
-                        your booked appointment will start soon, please click <a href="'.$activity.'">HERE</a> <br/><br/>';
-                        $send_mail =  self::send_mail_CECZ($name, $email, $subject, $content);
-                    }
-                }
-            }
-        }
-        
-        return true;
-    }
-    /*public function actionTaskDataSMSAbout($data_info = '') {
-        //数据库数据ID  直播间的ID
-        $ID        = $data_info['rid'];
-        if(!$ID) { return false;}
-        $dataInfo  = self::selectAppointmentInfo($ID, 1);//查出直播间所对应的user_id  条件是 p46_exhibition_room 的 rid
-        $userID    = ! empty ( $dataInfo['user_id'] ) ? $dataInfo['user_id'] : ''; //217 房间  user_id 3453
-        if($userID) {
-            $dataInfo1 =  self::selectAppointmentInfo($userID, 2); //关联查出我的收到预约列表人数
-            if($dataInfo1) {
-                $activity = self::shortConnection($ID);
-                foreach ($dataInfo1 as $key => $value) { //循环处理数据
-                    $mobile_phone = ! empty( $value['mobile_phone'] ) ? $value['mobile_phone'] : ''; 
-                    $email        = ! empty( $value['email'] )        ? $value['email'] : ''; 
-                    $first_name   = ! empty( $value['first_name'] )   ? $value['first_name'] : ''; 
-                    $user_name    = ! empty( $value['user_name'] )    ? $value['user_name'] : ''; 
-                    $ccode        = ! empty( $value['ccode'] )        ? $value['ccode'] : ''; 
-                    /*$mobile_phone = '18201058764'; 
-                    $email        = '2547977230@qq.com'; 
-                    $first_name   = '任明明'; 
-                    $user_name    = 'renmingming'; 
-                    $ccode        = 86; */
-                    /*$curl_data = [
-                        'mobile_phone' => $mobile_phone,
-                        'token'        => md5(md5($mobile_phone . $this->config['token'])),
-                        'validity'     => time() + 300,
-                        'activity'     => $activity,
-                        'template'     => 34, //34模板ID
-                        'ccode'        => $ccode, //手机号国家编码
-                    ];
-                    // 发送验证码接口
-                    $curlInfo = self::curls($curl_data,'phone_curl');
-                    //邮件发送
-                    $name = $first_name ? $first_name : $user_name;
-                    if($email && $name ) {
-                        $subject = $this->config['subject'];
-                        $content = '尊敬的用户，您预约的直播间即将开始！请点击:' . $activity;
-                        $send_mail =  self::send_mail($name, $email, $subject, $content);
-                    }
-                }
-            }
-        }
-        return true;
-    }*/
      /**
      * 生成短连接
      * @param $ID 直播间ID
@@ -382,77 +266,7 @@ class EfairTencentSMSWorker extends BaseWorker implements Worker
         return $url;
     }
     
-    /**
-     * 生成短连接
-     * @param $ID 直播间ID
-     */
-    public function shortConnection_bak($ID = '', $roomUrl = 1 ) {
-        if(!$ID) { return false;}
-        if($roomUrl == 1) {
-            $room_url  = self::efairurl.'index.php?app=exhibition/info&id=' . $ID . '&status=0';
-        } else if($roomUrl == 2) {
-            $room_url  = self::efairurl.'index.php?app=user/meeting_details&meetId='. $ID;
-        } else if($roomUrl == 3) {
-            $room_url  = self::efairurl.'index.php?app=User/myMeeting_wrap';
-        } else if($roomUrl == 4) {
-            $room_url  = $ID;
-        } 
-        $token =  self::token();
-        if(!$token) { return false;}
-        //开始请求
-        $curl = curl_init();
-        $urlData = 'https://api.weixin.qq.com/cgi-bin/shorturl?access_token=' . $token ;
-        $urlData1 = [
-            'action'   => 'long2short',
-            'long_url' => $room_url,
-        ];
-        curl_setopt_array($curl, array(
-        CURLOPT_URL => $urlData,
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_ENCODING => "",
-        CURLOPT_MAXREDIRS => 10,
-        CURLOPT_TIMEOUT => 0,
-        CURLOPT_FOLLOWLOCATION => true,
-        CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-        CURLOPT_CUSTOMREQUEST => "POST",
-        CURLOPT_POSTFIELDS => json_encode($urlData1),
-        CURLOPT_HTTPHEADER => array(
-            "Content-Type: application/json"
-        ),
-        ));
-        $response = curl_exec($curl);
-        curl_close($curl);
-        $response = $response ? json_decode($response , true) : [];
-        if($response['errcode'] == 0) {
-            return $response['short_url'];
-        }else {
-            return '';
-        }
-    }
 
-    //生成token
-    public function token($cache = true) {
-        $info = '';
-        $redis_name  = $this->params['ver_get_weixin_token'];//redis缓存key
-        $info = $this->redis->get($redis_name);
-        if(!$info || $cache == false) {
-            //删除
-            $this->redis->del($redis_name);
-            $url = 'https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid='.$this->config['appID'].'&secret='. $this->config['appsecret'] .'';
-            $info =  file_get_contents($url);
-            if($info) {
-                $info = json_decode( $info , true );
-                $access_token = ! empty ( $info['access_token'] ) ? $info['access_token'] : '';
-                $expires_in   = ! empty ( $info['expires_in'] ) ? $info['expires_in'] : '';
-                if($access_token && $expires_in) {
-                    $this->redis->set($redis_name, $access_token);
-                    $this->redis->expire($redis_name, $expires_in);
-                    $info = $access_token;
-                }
-            }
-        }
-        return $info;
-    }
     /**
      * 查询表数据 有关开直播预约的信息处理
      */
@@ -482,71 +296,6 @@ class EfairTencentSMSWorker extends BaseWorker implements Worker
         }
         return $return_data;
     }
-    /**
-     * 发送短信服务执行
-     */
-    public function actionTaskDataSMS($data_info = '') {
-        $data = $data_info['data'];
-        //数据库数据ID
-        $ID           = $data['id'];
-        $activity     = ! empty( $data['t_name'] ) ? $data['t_name'] : ''; 
-        $mobile_phone = ! empty( $data['mobile_phone'] ) ? $data['mobile_phone'] : ''; 
-        $email        = ! empty( $data['email'] ) ? $data['email'] : ''; 
-        $first_name   = ! empty( $data['first_name'] ) ? $data['first_name'] : ''; 
-        $user_name    = ! empty( $data['user_name'] ) ? $data['user_name'] : ''; 
-        $ccode        = ! empty( $data['ccode'] ) ? $data['ccode'] : ''; 
-        
-        $activity_info = [
-            'exhibiton_preview' => '论坛',
-            'exhibiton_room'    => '直播',
-        ];
-        $activity = $activity_info[$activity];
-        $curl_data = [
-            'mobile_phone' => $mobile_phone,
-            'token'        => md5(md5($mobile_phone . $this->config['token'])),
-            'validity'     => time() + 300,
-            'activity'     => $activity,
-            'template'     => $this->config['template'], //33模板ID
-            'ccode'        => $ccode, //手机号国家编码
-        ];
-        // 发送验证码接口
-        // $curlInfo = self::curls($curl_data,'phone_curl');
-        //邮件发送
-        $name = $first_name ? $first_name : $user_name;
-        if($email && $name ) {
-            // $subject = $this->config['subject'];
-            // $content = '尊敬的用户，您预约的'.$activity.'还有2分钟开始！';
-            // $send_mail =  self::send_mail($name, $email, $subject, $content);
-            $subject = '';
-            $content = 'Dear '.$name.',<br/><br/>
-            Dear participant, your booked appointment will start in 2 minutes<br/><br/>';
-            $send_mail =  self::send_mail_CECZ($name, $email, $subject, $content);
-            
-        }
-        // if( $curlInfo['code'] == 200 ) {
-            self::updateAudioTranslation($ID);
-        // }
-
-        return true;
-    }
-
-    /**
-     * 更新表数据 更新翻译文字
-     */
-    public function updateAudioTranslation( $Id = '' , $TaskId = 1) {
-        if(!$Id) { return false;}
-        $where = '';
-        $TaskId = intval($TaskId);
-        if($TaskId) {
-            $where .= 'is_success = '.  $TaskId ;
-        }
-        $this->pdo->query("SET NAMES utf8");
-        $sql  = "UPDATE `p46_notice` SET $where WHERE `id`=:id";
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute(array(':id' => $Id));
-       
-    }
-    
 
     /**
      * 发送短信服务执行 配对会议即将开始5分钟
@@ -606,39 +355,6 @@ class EfairTencentSMSWorker extends BaseWorker implements Worker
         $sql  = "UPDATE `p46_negotiation_info` SET $where WHERE `id`=:id";
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute(array(':id' => $Id));
-    }
-    /**
-     * 请求触发短信接口
-     */
-    public function curls($info = '', $type = 'phone_curl')
-    {
-        //判断参数完整性
-        if(!$info){return false;}
-        $ch = curl_init();      
-        $allow_type = [
-            'phone_curl'  => 'index.php?app=api/send/phone',
-            'email_curl'  => 'index.php?app=api/send/email',
-        ];
-        $url = $allow_type[$type];    
-        $url = $this->config['phone_url'] . $url;
-        
-        @$url = $url. '&' . http_build_query($info);
-        curl_setopt($ch, CURLOPT_URL, $url);                                
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-
-        $result  = curl_exec($ch);
-        $error = curl_error($ch);
-        $info = curl_getinfo($ch);
-        curl_close($ch);
-        try {
-            if($result){
-                $dataarr = json_decode($result,true);         
-                return $dataarr;
-            }            
-        } catch (\Exception $e) {
-            return [];
-        }
-       
     }
     
 

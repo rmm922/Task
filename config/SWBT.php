@@ -11,25 +11,13 @@ return [
             'worker_num' => 2,
             'class' => \SWBT\Worker\TencentWorker::class
         ],
-        'hebeiTencentDianboTask' => [
-            'worker_num' => 2,
-            'class' => \SWBT\Worker\HebeiTencentWorker::class
-        ],
         'tencentYinpingTask' => [
             'worker_num' => 2,
             'class' => \SWBT\Worker\TencentYinpingWorker::class
         ],
-        'hebeiTencentYinpingTask' => [
-            'worker_num' => 2,
-            'class' => \SWBT\Worker\HebeiTencentYinpingWorker::class
-        ],
         'tencentYinpingTask1' => [
             'worker_num' => 2,
             'class' => \SWBT\Worker\TencentYinpingWorker1::class
-        ],
-        'hebeiTencentYinpingTask1' => [
-            'worker_num' => 2,
-            'class' => \SWBT\Worker\HebeiTencentYinpingWorker1::class
         ],
         'tencentSMSTask' => [
             'worker_num' => 2,
@@ -44,14 +32,15 @@ return [
             'worker_num' => 2,
             'class' => \SWBT\Worker\LikeNumberWorker::class
         ],
-        'hebeilikeNumber' => [
-            'worker_num' => 2,
-            'class' => \SWBT\Worker\HebeiLikeNumberWorker::class
-        ],
         //私人企业队列
         'privateShowroomSMSTask' => [
             'worker_num' => 2,
             'class' => \SWBT\Worker\PrivateShowroomSMSWorker::class
+        ],
+        //efair
+        'efairTencentSMSTask' => [
+            'worker_num' => 2,
+            'class' => \SWBT\Worker\EfairTencentSMSWorker::class
         ],
     ],
     'beanstalkd' => [
