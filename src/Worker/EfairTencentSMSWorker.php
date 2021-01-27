@@ -110,8 +110,9 @@ class EfairTencentSMSWorker extends BaseWorker implements Worker
         $meetId       = $data['meetId'];//会议ID
         $userMyId     = ! empty( $data['userMyId'] ) ? $data['userMyId'] : '';//用户ID  外国游客
         $userToId     = ! empty( $data['userToId'] ) ? $data['userToId'] : '';//用户ID  中国企业
-        $SendWaiFanInfo =  self::SendWaiFanInfo($meetId, $userMyId);//userMyId外国企业
-        $SendChinaInfo  =  self::SendChinaInfo($meetId, $userToId);//userToId中国企业
+        $clientDomainName = ! empty( $data['clientDomainName'] ) ? $data['clientDomainName'] : self::efairurl;//主网站域名  
+        $SendChinaInfo  =  self::SendChinaInfo($meetId, $userToId, $clientDomainName);//userToId中国企业
+        $SendWaiFanInfo =  self::SendWaiFanInfo($meetId, $userMyId, $clientDomainName);//userMyId外国企业
         return true;
     }
     /**
@@ -119,7 +120,7 @@ class EfairTencentSMSWorker extends BaseWorker implements Worker
      * meetId
      * userToId
     */
-    public function SendChinaInfo ($meetId,$userID) {
+    public function SendChinaInfo ($meetId,$userID, $clientDomainName) {
         $send_mail = $nameEn = $selectedDay = $delete_date = '';
         $userInfo =  self::selectAppointmentInfo($userID, 3); //关联查出我的收到预约列表人数
 
@@ -132,7 +133,7 @@ class EfairTencentSMSWorker extends BaseWorker implements Worker
         }    
         if($userInfo) {
             $value = $userInfo[0];
-            $sendUrl =  self::efairurl.'index.php?app=User/automaticLogin&userId='.$userID.'&meetId='.$meetId;
+            $sendUrl  =  $clientDomainName.'index.php?app=User/automaticLogin&userId='.$userID.'&meetId='.$meetId;
             $activity = self::shortConnection($sendUrl, 4);//短连链接
             $email        = ! empty( $value['email'] )        ? $value['email'] : ''; 
             $first_name   = ! empty( $value['first_name'] )   ? $value['first_name'] : ''; 
@@ -154,7 +155,7 @@ class EfairTencentSMSWorker extends BaseWorker implements Worker
 
                 Please click  <a href="'.$activity.'">HERE</a> to view your appointment list. <br/>
 
-                Looking forward to meeting you at the 2021 EFAIR Brand Online Promotion: November 28 -- December 1, 2021.<br/><br/>
+                Looking forward to meeting you at the 2021 EFAIR Brand Online Promotion.<br/><br/>
 
                 We sincerely wish you a successful exhibition and fruitful new business connections. <br/><br/>
                 Yours truly <br/><br/>
@@ -170,9 +171,8 @@ class EfairTencentSMSWorker extends BaseWorker implements Worker
      * meetId
      * userMyId
      */
-    public function SendWaiFanInfo ($meetId,$userID) {
+    public function SendWaiFanInfo ($meetId,$userID, $clientDomainName) {
         $send_mail = $nameEn = $selectedDay = $delete_date = '';
-        $userInfo =  self::selectAppointmentInfo($userID, 3); //关联查出我的收到预约列表人数
 
         $meetData =  self::selectAppointmentInfo($meetId, 4); //会议信息
         if($meetData) {
@@ -184,7 +184,7 @@ class EfairTencentSMSWorker extends BaseWorker implements Worker
         $userInfo =  self::selectAppointmentInfo($userID, 3); //关联查出我的收到预约列表人数
         if($userInfo) {
             $value = $userInfo[0];
-            $sendUrl  = self::efairurl.'index.php?app=User/automaticLogin&userId='.$userID.'&meetId='.$meetId;
+            $sendUrl  = $clientDomainName.'index.php?app=User/automaticLogin&userId='.$userID.'&meetId='.$meetId;
             $activity = self::shortConnection($sendUrl, 4);//短连链接
             $email        = ! empty( $value['email'] )        ? $value['email'] : ''; 
             $first_name   = ! empty( $value['first_name'] )   ? $value['first_name'] : ''; 
@@ -201,7 +201,7 @@ class EfairTencentSMSWorker extends BaseWorker implements Worker
                 German  Time: '.self::hours_info_all($delete_date,2).' <br/><br/>
                 Beijing Time: '.$delete_date.' <br/><br/>
                 Should you wish to change an appointment or make a new one, please click <a href="'.$activity.'">HERE</a> . <br/><br/>
-                Looking forward to meeting you at the 2021 EFAIR Brand Online Promotion: November 28 -- December 1, 2021.<br/><br/>
+                Looking forward to meeting you at the 2021 EFAIR Brand Online Promotion.<br/><br/>
 
                 We sincerely wish you a successful exhibition and fruitful new business connections. <br/><br/>
 
@@ -220,13 +220,7 @@ class EfairTencentSMSWorker extends BaseWorker implements Worker
      */
     public function shortConnection($ID = '', $roomUrl = 1 ) {
         if(!$ID) { return false;}
-        if($roomUrl == 1) {
-            $room_url  = self::efairurl.'index.php?app=exhibition/info&id=' . $ID . '&status=0';
-        } else if($roomUrl == 2) {
-            $room_url  = self::efairurl.'index.php?app=user/meeting_details&meetId='. $ID;
-        } else if($roomUrl == 3) {
-            $room_url  = self::efairurl.'index.php?app=User/myMeeting_wrap';
-        } else if($roomUrl == 4) {
+        if($roomUrl == 4) {
             $room_url  = $ID;
         } 
 
@@ -306,6 +300,7 @@ class EfairTencentSMSWorker extends BaseWorker implements Worker
         $ID = $meetId = $data['id'];
         $userMyId     = ! empty( $data['user_my_id'] ) ? $data['user_my_id'] : ''; 
         $userToId     = ! empty( $data['user_to_id'] ) ? $data['user_to_id'] : ''; 
+        $clientDomainName    = ! empty( $data['client_domain_name'] ) ? $data['client_domain_name'] :  self::efairurl;//主网站域名  
         $userInfoAll  = [
             $userMyId,
             $userToId,
@@ -318,7 +313,7 @@ class EfairTencentSMSWorker extends BaseWorker implements Worker
             $userInfo =  self::selectAppointmentInfo($userID, 3); //关联查出我的收到预约列表人数
             if($userInfo) {
                 $value = $userInfo[0];
-                $sendUrl  = self::efairurl.'index.php?app=User/automaticLogin&userId='.$userID.'&meetId='.$meetId;
+                $sendUrl  = $clientDomainName.'index.php?app=User/automaticLogin&userId='.$userID.'&meetId='.$meetId;
                 $activity = self::shortConnection($sendUrl, 4);//短连链接
                 $email        = ! empty( $value['email'] )        ? $value['email'] : ''; 
                 $first_name   = ! empty( $value['first_name'] )   ? $value['first_name'] : ''; 
@@ -460,14 +455,15 @@ class EfairTencentSMSWorker extends BaseWorker implements Worker
         $selectedDay    = ! empty( $data['selectedDay'] ) ? $data['selectedDay'] : '';//日期
         $deleteDate     = ! empty( $data['deleteDate'] ) ? $data['deleteDate'] : '';//时间段 
         $exhibitorsId     = ! empty( $data['exhibitorsId'] ) ? $data['exhibitorsId'] : '';//展示ID 
-        self::ChinaSendCancelEmail($userToId,$exhibitorsId,$selectedDay,$deleteDate);//中方发送取消
-        self::WaiFanSendCancelEmail($userMyId,$exhibitorsId,$selectedDay,$deleteDate);//外方发送取消
+        $clientDomainName = ! empty( $data['clientDomainName'] ) ? $data['clientDomainName'] : self::efairurl;//主网站域名  
+        self::ChinaSendCancelEmail($userToId,$exhibitorsId,$selectedDay,$deleteDate, $clientDomainName);//中方发送取消
+        self::WaiFanSendCancelEmail($userMyId,$exhibitorsId,$selectedDay,$deleteDate, $clientDomainName);//外方发送取消
         return true;
     }
     /**
      * 中方发送取消邮件
      */
-    public function ChinaSendCancelEmail($userID, $exhibitorsId = '', $selectedDay = '', $delete_date = '') {
+    public function ChinaSendCancelEmail($userID, $exhibitorsId = '', $selectedDay = '', $delete_date = '', $clientDomainName = '') {
         $send_mail = $nameEn = '';
         $userInfo =  self::selectAppointmentInfo($userID, 3); //关联查出我的收到预约列表人数
 
@@ -504,7 +500,7 @@ class EfairTencentSMSWorker extends BaseWorker implements Worker
      /**
      * 外方发送取消邮件
      */
-    public function WaiFanSendCancelEmail($userID, $exhibitorsId = '', $selectedDay = '', $delete_date = '') {
+    public function WaiFanSendCancelEmail($userID, $exhibitorsId = '', $selectedDay = '', $delete_date = '', $clientDomainName = '') {
         $send_mail = $nameEn = '';
         $userInfo =  self::selectAppointmentInfo($userID, 3); //关联查出我的收到预约列表人数
 
