@@ -42,6 +42,11 @@ return [
             'worker_num' => 2,
             'class' => \SWBT\Worker\EfairTencentSMSWorker::class
         ],
+        //企业模板
+        'exhibitionTencentSMSTask' => [
+            'worker_num' => 2,
+            'class' => \SWBT\Worker\ExhibitiontemplateSMSWorker::class
+        ],
     ],
     'beanstalkd' => [
         'host' => '127.0.0.1',

@@ -166,7 +166,7 @@ class TencentWorker extends BaseWorker implements Worker
 
             //拼接路径
             $FileId        = $p46_exhibition_preview_info['tencent_file_id'];
-            $CoverFilePath = $p46_exhibition_preview_info['img_url'];//图片路径
+            $CoverFilePath = $p46_exhibition_preview_info['big_img_url'];//图片路径
             // $ClassId       = $p46_exhibition_preview_info['gid'];//分类 ID
             $ClassId       = 684545;//分类 ID
             $insertId      = $ID;//插入表数据ID
@@ -281,7 +281,7 @@ class TencentWorker extends BaseWorker implements Worker
         
         //拼接路径
         $MediaFilePath = $p46_exhibition_preview_info['video_url'];//视频路径
-        $CoverFilePath = $p46_exhibition_preview_info['img_url'];//图片路径
+        $CoverFilePath = $p46_exhibition_preview_info['big_img_url'];//图片路径
         // $ClassId =       $p46_exhibition_preview_info['gid'];//分类 ID
         $ClassId  =      684545;//分类 ID
         $insertId =      $ID;//插入表数据ID
@@ -339,7 +339,7 @@ class TencentWorker extends BaseWorker implements Worker
     public function selectAudioTranslation( $ID = '' ) {
         if(!$ID) { return false;}
         $this->pdo->query("SET NAMES utf8");
-        $sql  = 'SELECT video_url,img_url,gid,tencent_file_id  FROM p46_exhibition_preview WHERE  pid = ' . $ID . ' ';
+        $sql  = 'SELECT video_url,img_url,big_img_url,gid,tencent_file_id  FROM p46_exhibition_preview WHERE  pid = ' . $ID . ' ';
         $rs = $this->pdo->query($sql);
         $rs->setFetchMode(\PDO::FETCH_ASSOC);
         $dbData = $rs->fetchAll();
