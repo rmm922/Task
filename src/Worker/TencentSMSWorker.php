@@ -156,10 +156,10 @@ class TencentSMSWorker extends BaseWorker implements Worker
             //邮件发送
             $name = $first_name ? $first_name : $user_name;
             if($email && $name ) {
-                $subject = '[2021 China Brand Online Fair] You have a new appointment';
+                $subject = '[Ganzhou B2B conference] You have a new appointment';
                 $content = 'Dear '.$name.',<br/><br/>
 
-                You have a new meeting with an overseas company at the 2021 China Brand Online Fair. Please find below the summary of your appointments: <br/><br/>
+                You have a new meeting with an overseas company at the Ganzhou B2B conference. Please find below the summary of your appointments: <br/><br/>
 
                 Buyer: '.$nameEn.'. <br/><br/>
                 Date：'.$selectedDay.' <br/><br/>
@@ -169,7 +169,7 @@ class TencentSMSWorker extends BaseWorker implements Worker
 
                 Please click  <a href="'.$activity.'">HERE</a> to view your appointment list. <br/>
 
-                Looking forward to meeting you at the 2021 China Brand Online Fair: January 18-20, 2021.<br/><br/>
+                Looking forward to meeting you at the Ganzhou B2B conference: April 26-27, 2021.<br/><br/>
 
                 We sincerely wish you a successful exhibition and fruitful new business connections. <br/><br/>
                 Yours truly <br/><br/>
@@ -207,15 +207,15 @@ class TencentSMSWorker extends BaseWorker implements Worker
             //邮件发送
             $name = $first_name ? $first_name : $user_name;
             if($email && $name ) {
-                $subject = '[2021 China Brand Online Fair] Appointments confirmation';
+                $subject = '[Ganzhou B2B conference] Appointments confirmation';
                 $content = 'Dear '.$name.', <br/><br/>
-                Thank you for making appointments with your Chinese partner companies at the 2021 China Brand Online Fair. Please find below the summary of your appointments: <br/><br/>
+                Thank you for making appointments with your Chinese partner companies at the Ganzhou B2B conference. Please find below the summary of your appointments: <br/><br/>
                 Supplier: '.$nameEn.'. <br/><br/>
                 Date：'.$selectedDay.' <br/><br/>
                 Budapest Time: '.self::hours_info_all($delete_date,2).' <br/><br/>
                 Beijing Time: '.$delete_date.' <br/><br/>
                 Should you wish to change an appointment or make a new one, please click <a href="'.$activity.'">HERE</a> . <br/><br/>
-                Looking forward to meeting you at the 2021 China Brand Online Fair: January 18-20, 2021.<br/><br/>
+                Looking forward to meeting you at the Ganzhou B2B conference: April 26-27, 2021.<br/><br/>
 
                 We sincerely wish you a successful exhibition and fruitful new business connections. <br/><br/>
 
@@ -232,103 +232,59 @@ class TencentSMSWorker extends BaseWorker implements Worker
      * 预约直播 开始直播 发送短信 邮件
      */
     public function actionTaskDataSMSAbout($data_info = '') {
+        //两小时内不能重复发送
+        $redis_name_key = 'ver_wz_task_sms_';
         //数据库数据ID  直播间的ID
         $ID               = $data_info['rid'];
-        $exhibition_type  = ! empty( $data_info['exhibition_type'] ) ? $data_info['exhibition_type'] : 'exhibiton_room'; //默认直播
+        $exhibition_type  = $data_info['exhibition_type'] ? $data_info['exhibition_type'] : 'exhibition_room';
         if(!$ID) { return false;}
         $dataInfo1  = self::selectAppointmentInfo($ID, 6, $exhibition_type);//查出 web 端 p46_notice 里面的数据 条件 t_name = exhibiton_room  meet_id = $ID
         if($dataInfo1) {
-            $activity = self::shortConnection($ID);
-            $activity_info = [
-                'exhibiton_preview' => '论坛',
-                'exhibiton_room'    => '直播间',
-            ];
             foreach ($dataInfo1 as $key => $val) { //循环处理数据
                 $userID   =  $val['user_id'];
+                $live_address_url   =  $val['live_address_url'];
                 $userInfo =  self::selectAppointmentInfo($userID, 3); //用户的基本信息
-                if($userInfo) {
-                    $value = $userInfo[0];
-                    $mobile_phone = ! empty( $value['mobile_phone'] ) ? $value['mobile_phone'] : ''; 
-                    $email        = ! empty( $value['email'] )        ? $value['email'] : ''; 
-                    $first_name   = ! empty( $value['first_name'] )   ? $value['first_name'] : ''; 
-                    $user_name    = ! empty( $value['user_name'] )    ? $value['user_name'] : ''; 
-                    $ccode        = ! empty( $value['ccode'] )        ? $value['ccode'] : ''; 
-                    /*$mobile_phone = '18201058764'; 
-                    $email        = '2547977230@qq.com'; 
-                    $first_name   = '任明明'; 
-                    $user_name    = 'renmingming'; 
-                    $ccode        = 86; */
-                    $curl_data = [
-                        'mobile_phone' => $mobile_phone,
-                        'token'        => md5(md5($mobile_phone . $this->config['token'])),
-                        'validity'     => time() + 300,
-                        'activity'     => $activity,
-                        'template'     => 34, //34模板ID
-                        'ccode'        => $ccode, //手机号国家编码
-                    ];
-                    // 发送验证码接口
-                    // $curlInfo = self::curls($curl_data,'phone_curl');
-                    //邮件发送
-                    $name = $first_name ? $first_name : $user_name;
-                    if($email && $name ) {
-                        // $subject = $this->config['subject'];
-                        // $content = '尊敬的用户，您预约的直播间即将开始！请点击:' . $activity;
-                        // $send_mail =  self::send_mail($name, $email, $subject, $content);
-                        $subject = '';
-                        $content = 'Dear '.$name.',<br/><br/>
-                        your booked appointment will start soon, please click <a href="'.$activity.'">HERE</a> <br/><br/>';
-                        $send_mail =  self::send_mail_CECZ($name, $email, $subject, $content);
-                    }
+
+                if($userInfo && $live_address_url ) {
+                    //检测是否已经发送过
+                    $redis_name = $redis_name_key .$ID .'_'. $userID;
+                    if( ! $this->redis->exists($redis_name) ) {
+
+                        $activity = self::shortConnection($live_address_url, 4);
+                        $value = $userInfo[0];
+                        $mobile_phone = ! empty( $value['mobile_phone'] ) ? $value['mobile_phone'] : ''; 
+                        $email        = ! empty( $value['email'] )        ? $value['email'] : ''; 
+                        $first_name   = ! empty( $value['first_name'] )   ? $value['first_name'] : ''; 
+                        $user_name    = ! empty( $value['user_name'] )    ? $value['user_name'] : ''; 
+                        $ccode        = ! empty( $value['ccode'] )        ? $value['ccode'] : ''; 
+                        $curl_data = [
+                            'mobile_phone' => $mobile_phone,
+                            'token'        => md5(md5($mobile_phone . $this->config['token'])),
+                            'validity'     => time() + 300,
+                            'activity'     => $activity,
+                            'template'     => 34, //34模板ID
+                            'ccode'        => $ccode, //手机号国家编码
+                        ];
+                        // 发送验证码接口
+                        // $curlInfo = self::curls($curl_data,'phone_curl');
+                        //邮件发送
+                        $name = $first_name ? $first_name : $user_name;
+                        if($email && $name ) {
+                            $subject = '[2021  Brand Online Promotion] Appointments confirmation';
+                            $content = 'Dear '.$name.',<br/><br/>
+                            your booked appointment will start soon, please click <a href="'.$activity.'">HERE</a> <br/><br/>';
+                            $send_mail =  self::send_mail_CECZ($name, $email, $subject, $content,'EOVOBO');
+                        }
+
+                        //存入redis
+                        $this->redis->set($redis_name, 1);
+                        $this->redis->expire($redis_name, 7200);
+                    }    
                 }
             }
         }
-        
         return true;
     }
-    /*public function actionTaskDataSMSAbout($data_info = '') {
-        //数据库数据ID  直播间的ID
-        $ID        = $data_info['rid'];
-        if(!$ID) { return false;}
-        $dataInfo  = self::selectAppointmentInfo($ID, 1);//查出直播间所对应的user_id  条件是 p46_exhibition_room 的 rid
-        $userID    = ! empty ( $dataInfo['user_id'] ) ? $dataInfo['user_id'] : ''; //217 房间  user_id 3453
-        if($userID) {
-            $dataInfo1 =  self::selectAppointmentInfo($userID, 2); //关联查出我的收到预约列表人数
-            if($dataInfo1) {
-                $activity = self::shortConnection($ID);
-                foreach ($dataInfo1 as $key => $value) { //循环处理数据
-                    $mobile_phone = ! empty( $value['mobile_phone'] ) ? $value['mobile_phone'] : ''; 
-                    $email        = ! empty( $value['email'] )        ? $value['email'] : ''; 
-                    $first_name   = ! empty( $value['first_name'] )   ? $value['first_name'] : ''; 
-                    $user_name    = ! empty( $value['user_name'] )    ? $value['user_name'] : ''; 
-                    $ccode        = ! empty( $value['ccode'] )        ? $value['ccode'] : ''; 
-                    /*$mobile_phone = '18201058764'; 
-                    $email        = '2547977230@qq.com'; 
-                    $first_name   = '任明明'; 
-                    $user_name    = 'renmingming'; 
-                    $ccode        = 86; */
-                    /*$curl_data = [
-                        'mobile_phone' => $mobile_phone,
-                        'token'        => md5(md5($mobile_phone . $this->config['token'])),
-                        'validity'     => time() + 300,
-                        'activity'     => $activity,
-                        'template'     => 34, //34模板ID
-                        'ccode'        => $ccode, //手机号国家编码
-                    ];
-                    // 发送验证码接口
-                    $curlInfo = self::curls($curl_data,'phone_curl');
-                    //邮件发送
-                    $name = $first_name ? $first_name : $user_name;
-                    if($email && $name ) {
-                        $subject = $this->config['subject'];
-                        $content = '尊敬的用户，您预约的直播间即将开始！请点击:' . $activity;
-                        $send_mail =  self::send_mail($name, $email, $subject, $content);
-                    }
-                }
-            }
-        }
-        return true;
-    }*/
-    
     /**
      * 生成短连接新方法
      * @param $ID 直播间ID
@@ -454,7 +410,7 @@ class TencentSMSWorker extends BaseWorker implements Worker
     /**
      * 查询表数据 有关开直播预约的信息处理
      */
-    public function selectAppointmentInfo($ID = '', $type = '', $p46_notice_t_name = 'exhibiton_room') {
+    public function selectAppointmentInfo($ID = '', $type = '', $p46_notice_t_name = 'exhibition_room') {
         if(!$ID) { return false;}
         $this->pdo->query("SET NAMES utf8");
         if($type == 1) {
@@ -469,7 +425,7 @@ class TencentSMSWorker extends BaseWorker implements Worker
         } else if($type == 5) {
             $sql = 'SELECT name__en as nameEn  FROM p46_user_apply  WHERE id = ' . $ID;
         } else if($type == 6) {
-            $sql = "SELECT user_id FROM p46_notice  WHERE meet_id = $ID  AND t_name = $p46_notice_t_name";
+            $sql = "SELECT user_id,live_address_url FROM p46_notice  WHERE meet_id = $ID  AND t_name = '$p46_notice_t_name'";
         }
         $rs = $this->pdo->query($sql);
         $rs->setFetchMode(\PDO::FETCH_ASSOC);
@@ -575,7 +531,7 @@ class TencentSMSWorker extends BaseWorker implements Worker
                 //邮件发送
                 $name = $first_name ? $first_name : $user_name;
                 if($email && $name ) {
-                    $subject = '[2021 China Brand Online Fair] Reminder of upcoming appointment';
+                    $subject = '[Ganzhou B2B conference] Reminder of upcoming appointment';
                     $content = 'Dear '.$name.',<br/><br/>
 
                     Your next video meeting starts in 10 minutes, please click <a href="'.$activity.'">HERE</a> to start the video conference:<br/><br/>
@@ -692,7 +648,7 @@ class TencentSMSWorker extends BaseWorker implements Worker
     }
 
 
-    function send_mail_CECZ($name, $email, $subject, $content, $type = 0, $notification=false) {
+    function send_mail_CECZ($name, $email, $subject, $content, $head = 'CECZ', $notification=false) {
         $mail = new PHPMailer(true); //PHPMailer对象
     
         $host = $this->config['smtp_host'];
@@ -715,7 +671,7 @@ class TencentSMSWorker extends BaseWorker implements Worker
             $mail->Port       = $port;                                  // TCP port to connect to, use 465 for `PHPMailer::ENCRYPTION_SMTPS` above
     
             //Recipients
-            $mail->setFrom($smtp_mail, 'CECZ');
+            $mail->setFrom($smtp_mail, $head);
             $mail->addAddress($email, $name);                    // Add a recipient
     
             // Content
@@ -764,7 +720,7 @@ class TencentSMSWorker extends BaseWorker implements Worker
             //邮件发送
             $name = $first_name ? $first_name : $user_name;
             if($email && $name ) {
-                $subject = '[2021 China Brand Online Fair] Appointment cancellation';
+                $subject = '[Ganzhou B2B conference] Appointment cancellation';
                 $content = 'Dear '.$name.',<br/><br/>
 
                 Your appointment has been cancelled by the buyer:<br/><br/>
@@ -799,7 +755,7 @@ class TencentSMSWorker extends BaseWorker implements Worker
             //邮件发送
             $name = $first_name ? $first_name : $user_name;
             if($email && $name ) {
-                $subject = '[2021 China Brand Online Fair] Appointment cancellation';
+                $subject = '[Ganzhou B2B conference] Appointment cancellation';
                 $content = 'Dear '.$name.',<br/><br/>
                 Your have successfully cancelled your appointment :<br/><br/>
                 Supplier: '.$nameEn.'. <br/><br/>
@@ -816,19 +772,61 @@ class TencentSMSWorker extends BaseWorker implements Worker
 
     public function hours_info_all($key = '',$flag = 1) {
         $data = [
+            '09:00-09:30',
+            '09:30-10:00',
+            '10:00-10:30',
+            '10:30-11:00',
+            '11:00-11:30',
+            '11:30-12:00',
+            '12:00-12:30',
+            '12:30-13:00',
+            '13:00-13:30',
+            '13:30-14:00',
+            '14:00-14:30',
+            '14:30-15:00',
+            '15:00-15:30',
             '15:30-16:00',
             '16:00-16:30',
             '16:30-17:00',
             '17:00-17:30',
             '17:30-18:00',
+            '18:00-18:30',
+            '18:30-19:00',
+            '19:00-19:30',
+            '19:30-20:00',
+            '20:00-20:30',
+            '20:30-21:00',
+            '21:00-21:30',
+            '21:30-22:00',
         ];
 
         $data_buda = [
+            '09:00-09:30' => '02:00-02:30',
+            '09:30-10:00' => '02:30-03:00',
+            '10:00-10:30' => '03:00-03:30',
+            '10:30-11:00' => '03:30-04:00',
+            '11:00-11:30' => '04:00-04:30',
+            '11:30-12:00' => '04:30-05:00',
+            '12:00-12:30' => '05:00-05:30',
+            '12:30-13:00' => '05:30-06:00',
+            '13:00-13:30' => '06:00-06:30',
+            '13:30-14:00' => '06:30-07:00',
+            '14:00-14:30' => '07:00-07:30',
+            '14:30-15:00' => '07:30-08:00',
+            '15:00-15:30' => '08:00-08:30',
             '15:30-16:00' => '08:30-09:00',
-            '16:00-16:30' => '09:00-09:30',
-            '16:30-17:00' => '09:30-10:00',
-            '17:00-17:30' => '10:00-10:30',
-            '17:30-18:00' => '10:30-11:00',
+            '16:00-16:30' => '10:00-10:30',//预约页，我们现在和北京的时差是6个小时
+            '16:30-17:00' => '10:30-11:00',//预约页，我们现在和北京的时差是6个小时
+            '17:00-17:30' => '11:00-11:30',//预约页，我们现在和北京的时差是6个小时
+            '17:30-18:00' => '11:30-12:00',//预约页，我们现在和北京的时差是6个小时
+            '18:00-18:30' => '11:00-11:30',
+            '18:30-19:00' => '11:30-12:00',
+            '19:00-19:30' => '12:00-12:30',
+            '19:30-20:00' => '12:30-13:00',
+            '20:00-20:30' => '13:00-13:30',
+            '20:30-21:00' => '13:30-14:00',
+            '21:00-21:30' => '14:00-14:30',
+            '21:30-22:00' => '14:30-15:00',
         ];
         return $flag == 2 ? $data_buda[$key] : $data;
     }

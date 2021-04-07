@@ -287,49 +287,6 @@ class HebeiTencentSMSWorker extends BaseWorker implements Worker
         
         return true;
     }
-    /*public function actionTaskDataSMSAbout($data_info = '') {
-        //数据库数据ID  直播间的ID
-        $ID        = $data_info['rid'];
-        if(!$ID) { return false;}
-        $dataInfo  = self::selectAppointmentInfo($ID, 1);//查出直播间所对应的user_id  条件是 p46_exhibition_room 的 rid
-        $userID    = ! empty ( $dataInfo['user_id'] ) ? $dataInfo['user_id'] : ''; //217 房间  user_id 3453
-        if($userID) {
-            $dataInfo1 =  self::selectAppointmentInfo($userID, 2); //关联查出我的收到预约列表人数
-            if($dataInfo1) {
-                $activity = self::shortConnection($ID);
-                foreach ($dataInfo1 as $key => $value) { //循环处理数据
-                    $mobile_phone = ! empty( $value['mobile_phone'] ) ? $value['mobile_phone'] : ''; 
-                    $email        = ! empty( $value['email'] )        ? $value['email'] : ''; 
-                    $first_name   = ! empty( $value['first_name'] )   ? $value['first_name'] : ''; 
-                    $user_name    = ! empty( $value['user_name'] )    ? $value['user_name'] : ''; 
-                    $ccode        = ! empty( $value['ccode'] )        ? $value['ccode'] : ''; 
-                    /*$mobile_phone = '18201058764'; 
-                    $email        = '2547977230@qq.com'; 
-                    $first_name   = '任明明'; 
-                    $user_name    = 'renmingming'; 
-                    $ccode        = 86; */
-                    /*$curl_data = [
-                        'mobile_phone' => $mobile_phone,
-                        'token'        => md5(md5($mobile_phone . $this->config['token'])),
-                        'validity'     => time() + 300,
-                        'activity'     => $activity,
-                        'template'     => 34, //34模板ID
-                        'ccode'        => $ccode, //手机号国家编码
-                    ];
-                    // 发送验证码接口
-                    $curlInfo = self::curls($curl_data,'phone_curl');
-                    //邮件发送
-                    $name = $first_name ? $first_name : $user_name;
-                    if($email && $name ) {
-                        $subject = $this->config['subject'];
-                        $content = '尊敬的用户，您预约的直播间即将开始！请点击:' . $activity;
-                        $send_mail =  self::send_mail($name, $email, $subject, $content);
-                    }
-                }
-            }
-        }
-        return true;
-    }*/
      /**
      * 生成短连接
      * @param $ID 直播间ID
@@ -471,7 +428,7 @@ class HebeiTencentSMSWorker extends BaseWorker implements Worker
         } else if($type == 5) {
             $sql = 'SELECT name__en as nameEn  FROM p46_user_apply  WHERE id = ' . $ID;
         } else if($type == 6) {
-            $sql = "SELECT user_id FROM p46_notice  WHERE meet_id = $ID  AND t_name = $p46_notice_t_name";
+            $sql = "SELECT user_id,live_address_url FROM p46_notice  WHERE meet_id = $ID  AND t_name = '$p46_notice_t_name'";
         }
         $rs = $this->pdo->query($sql);
         $rs->setFetchMode(\PDO::FETCH_ASSOC);
