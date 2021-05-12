@@ -99,6 +99,14 @@ class TencentSMSWorker extends BaseWorker implements Worker
                 } else {
                     $msg = 'dwk完成处理-taskDataSMSSendMeetCancel--取消邮件和短信发送-失败' . $res;
                 }
+            } else if( $data_info['type'] == 'taskSubmitOrder' ) {//请求报价给卖家发邮件
+                //请求报价给卖家发邮件
+                $res = $this->actionTaskSubmitOrder($data_info);
+                if ($res == 200) {
+                    $msg = 'dwk完成处理-taskSubmitOrder--请求报价给卖家发邮件-成功';
+                } else {
+                    $msg = 'dwk完成处理-taskSubmitOrder--请求报价给卖家发邮件-失败' . $res;
+                }    
             } else {
                 $msg  = '参数错误';
             }
@@ -117,6 +125,95 @@ class TencentSMSWorker extends BaseWorker implements Worker
     }
 
     const zdourl = 'https://chinabrandfair.eovobo.com/';//中东欧
+
+
+    /*-------------20210409请求报价 提交意向订单 给 卖家发送邮件 触发队列邮件接口 开始--------------*/
+    /**
+     * 20210409
+     * 请求报价消息添加
+     * 提交意向订单 给 卖家发送邮件 触发队列邮件接口
+     */
+    public function actionTaskSubmitOrder($data_info = '') {
+        $data         = $data_info['data'];
+        $goodsID      =  ! empty( $data['goodsId'] ) ? $data['goodsId'] : '';//商品ID
+        $userId       =  ! empty( $data['userId'] ) ? $data['userId'] : '';//用户ID
+        $template_id  =  ! empty( $data['template_id'] ) ? $data['template_id'] : '';//模板ID
+        $clientDomainName = ! empty( $data['clientDomainName'] ) ? $data['clientDomainName'] : '';//商品详情
+
+        $user_to_goods_info   = self::selectAppointmentInfo( $goodsID , 11);//商品对应的用户ID 和商品的详情
+        if ( empty( $user_to_goods_info ) ) {
+            return false;
+        }
+
+        //2小时内不能重复报价同一个商品
+        $redis_goods_name ='ver_wz_get_user_message_num_sms_goods_'.$goodsID.'_uid_'.$userId;
+        if ( $this->redis->exists( $redis_goods_name ) ) {
+            return false;
+        }
+        try {
+            $user_to_id               = !empty($user_to_goods_info['user_id']) ? $user_to_goods_info['user_id'] : '';//商品对应的用户ID
+            //验证是否是自己是商品
+            if( $userId == $user_to_id ) {
+                return false;
+            }
+            $goods_name               = !empty($user_to_goods_info['goods_name']) ? $user_to_goods_info['goods_name'] : '';//zh商品名称
+            $goods_name__en           = !empty($user_to_goods_info['goods_name__en']) ? $user_to_goods_info['goods_name__en'] : '';//en商品名称
+
+            $userData                 = self::selectAppointmentInfo($userId, 3); //请求人的用户信息
+            $userinfo                 = $userData[0];
+            $first_name               = ! empty ( $userinfo['first_name'] ) ?  $userinfo['first_name'] : '';//登录用户的用户名
+            $email                    = ! empty ( $userinfo['email'] ) ?  $userinfo['email'] : '';//登录用户的邮箱
+            $mobile_phone             = ! empty ( $userinfo['mobile_phone'] ) ?  $userinfo['mobile_phone'] : '';//登录用户的电话
+            $address                  = ! empty ( $userinfo['address'] ) ?  $userinfo['address'] : '';//登录用户的地址
+
+            $template_info_zh   = [
+                '{user_name}'   => $first_name,
+                '{goods_name}'  => $goods_name,
+                '{real_name}'   => $first_name,
+                '{email}'       => $email,
+                '{mobile}'      => $mobile_phone,
+                '{address}'     => $address,
+                '{time}'        => date('Y-m-d H:i:s', time())
+            ];
+            $template_info_en   = [
+                '{user_name}'   => $first_name,
+                '{goods_name}'  => $goods_name__en,
+                '{real_name}'   => $first_name,
+                '{email}'       => $email,
+                '{mobile}'      => $mobile_phone,
+                '{address}'     => $address,
+                '{time}'        => date('Y-m-d H:i:s', time())
+            ];
+            
+            $template_sql_data      = self::selectAppointmentInfo( $template_id , 12);//查找模板
+
+            //邮件内容
+            $content    =  str_replace(array_keys($template_info_zh), array_values($template_info_zh), $template_sql_data['content']);
+            $content_en =  str_replace(array_keys($template_info_en), array_values($template_info_en), $template_sql_data['content_en']);
+
+            //给发邮件人的信息
+            $userDataTo  = self::selectAppointmentInfo($user_to_id, 3); //卖家的用户信息
+            $userinfoTo  = $userDataTo[0];
+
+            $first_name_to   = ! empty( $userinfoTo['first_name'] )   ? $userinfoTo['first_name'] : ''; 
+            $user_name_to    = ! empty( $userinfoTo['user_name'] )    ? $userinfoTo['user_name'] : ''; 
+            $nameTo     = $first_name_to ? $first_name_to : $user_name_to;
+            $emailTo   = ! empty( $userinfoTo['email'] )        ? $userinfoTo['email'] : ''; 
+            
+            $subject   = '[Request quotation]';
+            $send_mail =  self::send_mail_CECZ($nameTo, $emailTo, $subject, $content);
+            ######################模板变量替换结束#############
+            //标记商品ID 2小时不能重复添加
+            $this->redis->set($redis_goods_name,1);
+            $this->redis->expire($redis_goods_name, 7200 );
+            return true;
+        } catch (\Exception $e) {
+            return false;
+        }
+        
+    }
+     /*-------------20210409请求报价 提交意向订单 给 卖家发送邮件 触发队列邮件接口 结束--------------*/
+
     /**
      * 创建会议 发起预约短信内容
      */
@@ -300,6 +397,7 @@ class TencentSMSWorker extends BaseWorker implements Worker
         } else if($roomUrl == 4) {
             $room_url  = $ID;
         } 
+        return $room_url;
         $long_url    = $room_url;
         $now         = date('Y-m-d H:i:s',time());  
         $expire_date = date("Y-m-d",strtotime("+10years",strtotime($now)));
@@ -419,20 +517,26 @@ class TencentSMSWorker extends BaseWorker implements Worker
             $sql  = "SELECT  mobile_phone,email,first_name, user_name,ccode  FROM  p46_appointment AS pa  JOIN p46_users  AS pu ON pa.from_id = pu.user_id WHERE pa.statu = 1 AND  pa.to_id = '$ID'";
         } else if($type == 3) {
             //用户信息
-            $sql  = "SELECT  mobile_phone,email,first_name, user_name,ccode  FROM  p46_users  WHERE user_id = '$ID'";
+            $sql  = "SELECT  mobile_phone,email,first_name, user_name,ccode, `address`  FROM  p46_users  WHERE user_id = '$ID'";
         } else if($type == 4) {
             $sql = 'SELECT ua.name__en as nameEn, ni.add_open_time, ni.add_stop_time FROM p46_user_apply as ua JOIN p46_negotiation_info as ni ON ua.id = ni.exhibitors_id WHERE ni.id = ' . $ID;
         } else if($type == 5) {
             $sql = 'SELECT name__en as nameEn  FROM p46_user_apply  WHERE id = ' . $ID;
         } else if($type == 6) {
             $sql = "SELECT user_id,live_address_url FROM p46_notice  WHERE meet_id = $ID  AND t_name = '$p46_notice_t_name'";
+        //商品    
+        } else if($type == 11) {
+            $sql = "SELECT user_id,goods_name,goods_name__en FROM  p46_goods WHERE  goods_id = $ID";
+        //模板    
+        } else if($type == 12) {
+            $sql =  "SELECT * FROM  p46_msg_system WHERE  sy_id = $ID";
         }
         $rs = $this->pdo->query($sql);
         $rs->setFetchMode(\PDO::FETCH_ASSOC);
         $dbData = $rs->fetchAll();
         $return_data = [];
         if($dbData) {
-            $return_data =  $type == 1 ? $dbData[0] : $dbData;
+            $return_data =  $type  > 10 ? $dbData[0] : $dbData;
         }
         return $return_data;
     }
