@@ -253,10 +253,10 @@ class TencentSMSWorker extends BaseWorker implements Worker
             //邮件发送
             $name = $first_name ? $first_name : $user_name;
             if($email && $name ) {
-                $subject = '[Ganzhou B2B conference] You have a new appointment';
+                $subject = '[Wuhu online B2B meetings] You have a new appointment';
                 $content = 'Dear '.$name.',<br/><br/>
 
-                You have a new meeting with an overseas company at the Ganzhou B2B conference. Please find below the summary of your appointments: <br/><br/>
+                You have a new meeting with an overseas company at the Wuhu online B2B meetings. Please find below the summary of your appointments: <br/><br/>
 
                 Buyer: '.$nameEn.'. <br/><br/>
                 Date：'.$selectedDay.' <br/><br/>
@@ -266,7 +266,7 @@ class TencentSMSWorker extends BaseWorker implements Worker
 
                 Please click  <a href="'.$activity.'">HERE</a> to view your appointment list. <br/>
 
-                Looking forward to meeting you at the Ganzhou B2B conference: April 26-27, 2021.<br/><br/>
+                Looking forward to meeting you at the Wuhu online B2B meetings: June 21-23, 2021.<br/><br/>
 
                 We sincerely wish you a successful exhibition and fruitful new business connections. <br/><br/>
                 Yours truly <br/><br/>
@@ -304,15 +304,15 @@ class TencentSMSWorker extends BaseWorker implements Worker
             //邮件发送
             $name = $first_name ? $first_name : $user_name;
             if($email && $name ) {
-                $subject = '[Ganzhou B2B conference] Appointments confirmation';
+                $subject = '[Wuhu online B2B meetings] Appointments confirmation';
                 $content = 'Dear '.$name.', <br/><br/>
-                Thank you for making appointments with your Chinese partner companies at the Ganzhou B2B conference. Please find below the summary of your appointments: <br/><br/>
+                Thank you for making appointments with your Chinese partner companies at the Wuhu online B2B meetings. Please find below the summary of your appointments: <br/><br/>
                 Supplier: '.$nameEn.'. <br/><br/>
                 Date：'.$selectedDay.' <br/><br/>
                 Budapest Time: '.self::hours_info_all($delete_date,2).' <br/><br/>
                 Beijing Time: '.$delete_date.' <br/><br/>
                 Should you wish to change an appointment or make a new one, please click <a href="'.$activity.'">HERE</a> . <br/><br/>
-                Looking forward to meeting you at the Ganzhou B2B conference: April 26-27, 2021.<br/><br/>
+                Looking forward to meeting you at the Wuhu online B2B meetings: June 21-23, 2021.<br/><br/>
 
                 We sincerely wish you a successful exhibition and fruitful new business connections. <br/><br/>
 
@@ -635,7 +635,7 @@ class TencentSMSWorker extends BaseWorker implements Worker
                 //邮件发送
                 $name = $first_name ? $first_name : $user_name;
                 if($email && $name ) {
-                    $subject = '[Ganzhou B2B conference] Reminder of upcoming appointment';
+                    $subject = '[Wuhu online B2B meetings] Reminder of upcoming appointment';
                     $content = 'Dear '.$name.',<br/><br/>
 
                     Your next video meeting starts in 10 minutes, please click <a href="'.$activity.'">HERE</a> to start the video conference:<br/><br/>
@@ -824,7 +824,7 @@ class TencentSMSWorker extends BaseWorker implements Worker
             //邮件发送
             $name = $first_name ? $first_name : $user_name;
             if($email && $name ) {
-                $subject = '[Ganzhou B2B conference] Appointment cancellation';
+                $subject = '[Wuhu online B2B meetings] Appointment cancellation';
                 $content = 'Dear '.$name.',<br/><br/>
 
                 Your appointment has been cancelled by the buyer:<br/><br/>
@@ -859,7 +859,7 @@ class TencentSMSWorker extends BaseWorker implements Worker
             //邮件发送
             $name = $first_name ? $first_name : $user_name;
             if($email && $name ) {
-                $subject = '[Ganzhou B2B conference] Appointment cancellation';
+                $subject = '[Wuhu online B2B meetings] Appointment cancellation';
                 $content = 'Dear '.$name.',<br/><br/>
                 Your have successfully cancelled your appointment :<br/><br/>
                 Supplier: '.$nameEn.'. <br/><br/>
@@ -918,7 +918,7 @@ class TencentSMSWorker extends BaseWorker implements Worker
             '14:00-14:30' => '07:00-07:30',
             '14:30-15:00' => '07:30-08:00',
             '15:00-15:30' => '08:00-08:30',
-            '15:30-16:00' => '08:30-09:00',
+            '15:30-16:00' => '09:30-10:00',//预约页，我们现在和北京的时差是6个小时
             '16:00-16:30' => '10:00-10:30',//预约页，我们现在和北京的时差是6个小时
             '16:30-17:00' => '10:30-11:00',//预约页，我们现在和北京的时差是6个小时
             '17:00-17:30' => '11:00-11:30',//预约页，我们现在和北京的时差是6个小时
