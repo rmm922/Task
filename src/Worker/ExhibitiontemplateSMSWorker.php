@@ -83,6 +83,21 @@ class ExhibitiontemplateSMSWorker extends BaseWorker implements Worker
                 } else {
                     $msg = 'dwk完成处理-taskDataSMSSendMeetCancel--展会模板取消邮件和短信发送-失败' . $res;
                 }
+            } else if ($data_info['type'] == 'taskExhibitionPrepareSMS') {  //用户预约展会即将开始的前一天
+
+                $res = $this->actionTaskExhibitionPrepareSMS($data_info);
+                if ($res == 200) {
+                    $msg = 'dwk完成处理-taskExhibitionPrepareSMS--提醒消息发送-成功';
+                } else {
+                    $msg = 'dwk完成处理-taskExhibitionPrepareSMS--提醒消息发送-失败' . $res;
+                }
+            } else if ($data_info['type'] == 'taskExhibitionStartSMS') {  //用户预约展会即将开始当天
+                $res = $this->actionTaskExhibitionStartSMS($data_info);
+                if ($res == 200) {
+                    $msg = 'dwk完成处理-taskExhibitionStartSMS--提醒消息发送-成功';
+                } else {
+                    $msg = 'dwk完成处理-taskExhibitionStartSMS--提醒消息发送-失败' . $res;
+                }    
             } else {
                 $msg  = '参数错误';
             }
@@ -101,6 +116,110 @@ class ExhibitiontemplateSMSWorker extends BaseWorker implements Worker
     }
 
     const hebeiurl = 'https://hebei.eovobo.com/';
+
+        /**
+     * 发送短信服务执行 之 展会即将开始的前一天
+     */
+    public function actionTaskExhibitionPrepareSMS($data_info = '') {
+        $data = $data_info['data'];
+        //数据库数据ID
+        $mobile_phone = ! empty( $data['mobile_phone'] ) ? $data['mobile_phone'] : ''; 
+        $email        = ! empty( $data['email'] ) ? $data['email'] : ''; 
+        $first_name   = ! empty( $data['first_name'] ) ? $data['first_name'] : ''; 
+        $ccode        = ! empty( $data['ccode'] ) ? $data['ccode'] : '86'; 
+        $client_domain_name    = ! empty( $data['client_domain_name'] ) ? $data['client_domain_name'] : ''; 
+        $data_source           = ! empty( $data['data_source'] ) ? $data['data_source'] : 0; 
+        $title           = ! empty( $data['title'] ) ? $data['title'] : ''; 
+        $exhibition = $title . '，还有一天开始';
+        $curl_data = [
+            'mobile_phone' => $mobile_phone,
+            'token'        => md5(md5($mobile_phone . $this->config['token'])),
+            'validity'     => time() + 300,
+            'template'     => $this->config['template'], //33模板ID
+            'ccode'        => $ccode, //手机号国家编码
+            'exhibition'   => $exhibition, //手机号国家编码
+        ];
+        // 发送验证码接口
+        if($title) {
+            $curlInfo = self::curls($curl_data,'phone_curl');
+        }
+        //邮件发送
+        $name = $first_name ? $first_name : 'User';
+        if($email && $name ) {
+            $subject = 'You have a new remind';
+            $content = 'Dear '.$name.',<br/><br/>
+            Dear participant, your booked appointment will start in 1 day<br/><br/>';
+            $send_mail =  self::send_mail_CECZ($name, $email, $subject, $content,'EOVOBO');
+        }
+        $ID = [
+            'fromid' => $data['fromid'],
+            'toid'   => $data['toid'],
+        ];
+        self::update_p46_user_exhibition_follow($ID, 1);
+
+        return true;
+    }
+
+     /**
+     * 发送短信服务执行 之 展会即将开始当天
+     */
+    public function actionTaskExhibitionStartSMS($data_info = '') {
+        $data = $data_info['data'];
+        //数据库数据ID
+        $mobile_phone = ! empty( $data['mobile_phone'] ) ? $data['mobile_phone'] : ''; 
+        $email        = ! empty( $data['email'] ) ? $data['email'] : ''; 
+        $first_name   = ! empty( $data['first_name'] ) ? $data['first_name'] : ''; 
+        $ccode        = ! empty( $data['ccode'] ) ? $data['ccode'] : '86'; 
+        $client_domain_name    = ! empty( $data['client_domain_name'] ) ? $data['client_domain_name'] : ''; 
+        $data_source           = ! empty( $data['data_source'] ) ? $data['data_source'] : 0; 
+        $title           = ! empty( $data['title'] ) ? $data['title'] : ''; 
+        $exhibition = $title . '，即将开始';
+        $curl_data = [
+            'mobile_phone' => $mobile_phone,
+            'token'        => md5(md5($mobile_phone . $this->config['token'])),
+            'validity'     => time() + 300,
+            'template'     => $this->config['template'], //33模板ID
+            'ccode'        => $ccode, //手机号国家编码
+            'exhibition'   => $exhibition, //手机号国家编码
+        ];
+        // 发送验证码接口
+        if($title) {
+            $curlInfo = self::curls($curl_data,'phone_curl');
+        }
+        //邮件发送
+        $name = $first_name ? $first_name : 'User';
+        if($email && $name ) {
+            $activity = '';
+            $subject = 'You have a new remind';
+            $content = 'Dear '.$name.',<br/><br/>
+            your booked appointment will start soon, please click <a href="'.$activity.'">HERE</a> <br/><br/>';
+            $send_mail =  self::send_mail_CECZ($name, $email, $subject, $content,'EOVOBO');
+        }
+        $ID = [
+            'fromid' => $data['fromid'],
+            'toid'   => $data['toid'],
+        ];
+        self::update_p46_user_exhibition_follow($ID, 2);
+        return true;
+    }
+    
+    /**
+     * 更新表数据
+     */
+    public function update_p46_user_exhibition_follow( $Id = '' , $TaskId = 1) {
+        if(!$Id) { return false;}
+        $where = '';
+        $TaskId = intval($TaskId);
+        if($TaskId) {
+            $where .= 'is_success = '.  $TaskId ;
+        }
+        $this->pdo->query("SET NAMES utf8");
+        $sql  = "UPDATE `p46_user_exhibition_follow` SET $where WHERE `fromid`=:fromid AND `toid` = :toid";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute(array( ':fromid' => $Id['fromid'],  ':toid' => $Id['toid']  ));
+       
+    }
+
     /**
      * 创建会议 发起预约短信内容
      */
@@ -411,7 +530,7 @@ class ExhibitiontemplateSMSWorker extends BaseWorker implements Worker
     }
 
 
-    function send_mail_CECZ($name, $email, $subject, $content, $type = 0, $notification=false) {
+    function send_mail_CECZ($name, $email, $subject, $content, $head = 'China', $notification=false) {    
         $mail = new PHPMailer(true); //PHPMailer对象
     
         $host = $this->config['smtp_host'];
@@ -434,7 +553,7 @@ class ExhibitiontemplateSMSWorker extends BaseWorker implements Worker
             $mail->Port       = $port;                                  // TCP port to connect to, use 465 for `PHPMailer::ENCRYPTION_SMTPS` above
     
             //Recipients
-            $mail->setFrom($smtp_mail, 'China');
+            $mail->setFrom($smtp_mail, $head);
             $mail->addAddress($email, $name);                    // Add a recipient
     
             // Content
@@ -580,6 +699,42 @@ class ExhibitiontemplateSMSWorker extends BaseWorker implements Worker
             return  $data_yindu[$key];
         }
         // return $flag == 2 ? $data_buda[$key] : $data;
+    }
+
+
+
+     /**
+     * 请求触发短信接口
+     */
+    public function curls($info = '', $type = 'phone_curl')
+    {
+        //判断参数完整性
+        if(!$info){return false;}
+        $ch = curl_init();      
+        $allow_type = [
+            'phone_curl'  => 'index.php?app=api/send/phone_remind',
+            'email_curl'  => 'index.php?app=api/send/email',
+        ];
+        $url = $allow_type[$type];    
+        $url = $this->config['phone_url'] . $url;
+        
+        @$url = $url. '&' . http_build_query($info);
+        curl_setopt($ch, CURLOPT_URL, $url);                                
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+
+        $result  = curl_exec($ch);
+        $error = curl_error($ch);
+        $info = curl_getinfo($ch);
+        curl_close($ch);
+        try {
+            if($result){
+                $dataarr = json_decode($result,true);         
+                return $dataarr;
+            }            
+        } catch (\Exception $e) {
+            return [];
+        }
+       
     }
 
     //  关闭链接
