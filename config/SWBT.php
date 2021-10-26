@@ -47,6 +47,11 @@ return [
             'worker_num' => 2,
             'class' => \SWBT\Worker\ExhibitiontemplateSMSWorker::class
         ],
+        //IM聊天任务
+        'tencentImTask' => [
+            'worker_num' => 2,
+            'class' => \SWBT\Worker\TencentImTaskWorker::class
+        ],
     ],
     'beanstalkd' => [
         'host' => '127.0.0.1',
