@@ -234,8 +234,8 @@ class TencentSMSWorker extends BaseWorker implements Worker
     public function exhibitionInfo($eid = 8) {
         $data = [
             8 => [//芜湖
-                'city' => '2021 China Brand Online Fair',
-                'time' => 'December 13-17, 2021.'
+                'city' => 'Foshan B2B Online Meeting',
+                'time' => 'November 22-24, 2021.'
             ],
             143 => [//辽宁
                 'city' => 'Liaoning B2B Online Meeting',
@@ -292,7 +292,7 @@ class TencentSMSWorker extends BaseWorker implements Worker
             //邮件发送
             $name = $first_name ? $first_name : $user_name;
             if($email && $name ) {
-                $subject = 'You have a new appointment';
+                $subject = '['.$cityinfo.'] You have a new appointment';
                 $content = 'Dear '.$name.',<br/><br/>
 
                 You have a new meeting with an overseas company at the '.$cityinfo.'. Please find below the summary of your appointments: <br/><br/>
@@ -349,7 +349,7 @@ class TencentSMSWorker extends BaseWorker implements Worker
             //邮件发送
             $name = $first_name ? $first_name : $user_name;
             if($email && $name ) {
-                $subject = 'Appointments confirmation';
+                $subject = '['.$cityinfo.'] Appointments confirmation';
                 $content = 'Dear '.$name.', <br/><br/>
                 Thank you for making appointments with your Chinese partner companies at the '.$cityinfo.'. Please find below the summary of your appointments: <br/><br/>
                 Supplier: '.$nameEn.'. <br/><br/>
@@ -689,7 +689,7 @@ class TencentSMSWorker extends BaseWorker implements Worker
                 //邮件发送
                 $name = $first_name ? $first_name : $user_name;
                 if($email && $name ) {
-                    $subject = 'Reminder of upcoming appointment';
+                    $subject = '['.$cityinfo.'] Reminder of upcoming appointment';
                     $content = 'Dear '.$name.',<br/><br/>
 
                     Your next video meeting starts in 10 minutes, please click <a href="'.$activity.'">HERE</a> to start the video conference:<br/><br/>
@@ -885,7 +885,7 @@ class TencentSMSWorker extends BaseWorker implements Worker
             //邮件发送
             $name = $first_name ? $first_name : $user_name;
             if($email && $name ) {
-                $subject = 'Appointment cancellation';
+                $subject = '['.$cityinfo.'] Appointment cancellation';
                 $content = 'Dear '.$name.',<br/><br/>
 
                 Your appointment has been cancelled by the buyer:<br/><br/>
@@ -928,7 +928,7 @@ class TencentSMSWorker extends BaseWorker implements Worker
             //邮件发送
             $name = $first_name ? $first_name : $user_name;
             if($email && $name ) {
-                $subject = 'Appointment cancellation';
+                $subject = '['.$cityinfo.'] Appointment cancellation';
                 $content = 'Dear '.$name.',<br/><br/>
                 Your have successfully cancelled your appointment :<br/><br/>
                 Supplier: '.$nameEn.'. <br/><br/>
@@ -986,12 +986,12 @@ class TencentSMSWorker extends BaseWorker implements Worker
             '13:30-14:00' => '06:30-07:00',
             '14:00-14:30' => '07:00-07:30',
             '14:30-15:00' => '07:30-08:00',
-            '15:00-15:30' => '08:00-08:30',//预约页，我们现在和北京的时差是6个小时
-            '15:30-16:00' => '08:30-09:00',//预约页，我们现在和北京的时差是6个小时
-            '16:00-16:30' => '09:00-09:30',//预约页，我们现在和北京的时差是6个小时
-            '16:30-17:00' => '09:30-10:00',//预约页，我们现在和北京的时差是6个小时
-            '17:00-17:30' => '10:00-10:30',//预约页，我们现在和北京的时差是6个小时
-            '17:30-18:00' => '10:30-11:00',//预约页，我们现在和北京的时差是6个小时
+            '15:00-15:30' => '09:00-09:30',//预约页，我们现在和北京的时差是6个小时
+            '15:30-16:00' => '09:30-10:00',//预约页，我们现在和北京的时差是6个小时
+            '16:00-16:30' => '10:00-10:30',//预约页，我们现在和北京的时差是6个小时
+            '16:30-17:00' => '10:30-11:00',//预约页，我们现在和北京的时差是6个小时
+            '17:00-17:30' => '11:00-11:30',//预约页，我们现在和北京的时差是6个小时
+            '17:30-18:00' => '11:30-12:00',//预约页，我们现在和北京的时差是6个小时
             '18:00-18:30' => '11:00-11:30',
             '18:30-19:00' => '11:30-12:00',
             '19:00-19:30' => '12:00-12:30',
