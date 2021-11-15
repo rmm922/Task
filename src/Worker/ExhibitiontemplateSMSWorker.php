@@ -234,6 +234,58 @@ class ExhibitiontemplateSMSWorker extends BaseWorker implements Worker
         $SendWaiFanInfo =  self::SendWaiFanInfo($meetId, $userMyId, $clientDomainName);//userMyId外国企业
         return true;
     }
+
+     /**
+     * 展会ID 定义展会的开始时间 和 结束时间
+     */
+    public function exhibitionInfo($eid = 8) {
+        $data = [
+            8 => [//芜湖
+                // 'city' => 'Foshan B2B Online Meeting',
+                // 'time' => 'October 11-15, 2021.'
+                'city' => 'Hebei B2B Online Meeting',
+                'time' => 'November 15-19, 2021.'
+            ],
+            22 => [//自行车
+                'city' => 'Brand Online Promotion',
+                'time' => 'September 6-8, 2021.'
+            ],
+            143 => [//辽宁
+                'city' => 'Liaoning B2B Online Meeting',
+                'time' => 'October 26-29, 2021.'
+            ],
+            144 => [//山东
+                'city' => 'Shandong B2B Online Meeting',
+                'time' => 'November 22-24, 2021.'
+            ],
+            145 => [//河北 河北品牌“云”上行-汽配展中东欧专场    （2021年12月6-10日）
+                'city' => 'Hebei B2B Online Meeting',
+                'time' => 'December 6-10, 2021.'
+            ],
+            146 => [//河北 河北品牌“云”上行-纺织及消费品展（2021年11月15-19日）
+                'city' => 'Hebei B2B Online Meeting',
+                'time' => 'November 15-19, 2021.'
+            ],
+            147 => [//河北 河北品牌“云”上行-建材及石油展  （2021年11月18-22日） 
+                'city' => 'Hebei B2B Online Meeting',
+                'time' => 'November 18-22, 2021.'
+            ],
+            148 => [//河北 河北品牌“云”上行-农业及畜牧展（2021年11月24-28）
+                'city' => 'Hebei B2B Online Meeting',
+                'time' => 'November 24-28, 2021.'
+            ],
+            149 => [//河北 河北品牌“云”上行-汽车、两轮展  （2021年12月14-18日）
+                'city' => 'Hebei B2B Online Meeting',
+                'time' => 'December 14-18, 2021.'
+            ],
+            150 => [//河北 河北品牌“云”上行-五金工具及自行车展  （2021年12月16-20日）
+                'city' => 'Hebei B2B Online Meeting',
+                'time' => 'December 16-20, 2021.'
+            ],
+        ];
+
+        return $data[$eid] ? $data[$eid] : $data[8];
+    }
     /**
      * 中国企业 
      * meetId
@@ -251,6 +303,9 @@ class ExhibitiontemplateSMSWorker extends BaseWorker implements Worker
             $selectedDay  = date('Y-m-d', $meetInfo['add_open_time'] );
             $delete_date  = date('H:i', $meetInfo['add_open_time'] ).'-'. date('H:i', $meetInfo['add_stop_time'] );
             $http_host_source  = $meetInfo['http_host_source'];
+            $email_info      = self::exhibitionInfo($http_host_source);
+            $cityinfo        = $email_info['city'];
+            $timeinfo        = $email_info['time'];
 
         }    
         if($userInfo) {
@@ -263,24 +318,24 @@ class ExhibitiontemplateSMSWorker extends BaseWorker implements Worker
             //邮件发送
             $name = $first_name ? $first_name : $user_name;
             if($email && $name ) {
-                $subject = '[2021 Brand Online Promotion] You have a new appointment';
+                $subject = '['.$cityinfo.'] You have a new appointment';
                 $content = 'Dear '.$name.',<br/><br/>
 
-                You have a new meeting with an overseas company at the 2021 Brand Online Promotion. Please find below the summary of your appointments: <br/><br/>
+                You have a new meeting with an overseas company at the '.$cityinfo.'. Please find below the summary of your appointments: <br/><br/>
 
                 Buyer: '.$nameEn.'. <br/><br/>
                 Date：'.$selectedDay.' <br/><br/>
-                Budapest Time: '.self::hours_info_all($delete_date,2).' <br/><br/>
+                America Time: '.self::hours_info_all($delete_date,2).' <br/><br/>
                 Beijing Time: '.$delete_date.' <br/><br/>
 
 
                 Please click  <a href="'.$activity.'">HERE</a> to view your appointment list. <br/>
 
-                Looking forward to meeting you at the 2021  Brand Online Promotion.<br/><br/>
+                Looking forward to meeting you at the '.$cityinfo.': '.$timeinfo.'<br/><br/>
 
                 We sincerely wish you a successful exhibition and fruitful new business connections. <br/><br/>
                 Yours truly <br/><br/>
-                Brand Online Promotion';
+                '.$cityinfo.'';
                 $send_mail =  self::send_mail_CECZ($name, $email, $subject, $content);
             }
         }
@@ -303,6 +358,9 @@ class ExhibitiontemplateSMSWorker extends BaseWorker implements Worker
             $selectedDay  = date('Y-m-d', $meetInfo['add_open_time'] );
             $delete_date  = date('H:i', $meetInfo['add_open_time'] ).'-'. date('H:i', $meetInfo['add_stop_time'] );
             $http_host_source  = $meetInfo['http_host_source'];
+            $email_info      = self::exhibitionInfo($http_host_source);
+            $cityinfo        = $email_info['city'];
+            $timeinfo        = $email_info['time'];
         }    
         $userInfo =  self::selectAppointmentInfo($userID, 3); //关联查出我的收到预约列表人数
         if($userInfo) {
@@ -315,21 +373,21 @@ class ExhibitiontemplateSMSWorker extends BaseWorker implements Worker
             //邮件发送
             $name = $first_name ? $first_name : $user_name;
             if($email && $name ) {
-                $subject = '[2021  Brand Online Promotion] Appointments confirmation';
+                $subject = '['.$cityinfo.'] Appointments confirmation';
                 $content = 'Dear '.$name.', <br/><br/>
-                Thank you for making appointments with your Chinese partner companies at the 2021 Brand Online Promotion. Please find below the summary of your appointments: <br/><br/>
+                Thank you for making appointments with your Chinese partner companies at the '.$cityinfo.'. Please find below the summary of your appointments: <br/><br/>
                 Supplier: '.$nameEn.'. <br/><br/>
                 Date：'.$selectedDay.' <br/><br/>
-                Budapest Time: '.self::hours_info_all($delete_date,2).' <br/><br/>
+                America Time: '.self::hours_info_all($delete_date,2).' <br/><br/>
                 Beijing Time: '.$delete_date.' <br/><br/>
                 Should you wish to change an appointment or make a new one, please click <a href="'.$activity.'">HERE</a> . <br/><br/>
-                Looking forward to meeting you at the 2021 Brand Online Promotion.<br/><br/>
+                Looking forward to meeting you at the '.$cityinfo.': '.$timeinfo.'<br/><br/>
 
                 We sincerely wish you a successful exhibition and fruitful new business connections. <br/><br/>
 
 
                 Yours truly <br/>
-                Brand Online Promotion';
+                '.$cityinfo.'';
                 $send_mail =  self::send_mail_CECZ($name, $email, $subject, $content);
             }
         }
@@ -347,6 +405,7 @@ class ExhibitiontemplateSMSWorker extends BaseWorker implements Worker
         } 
 
         $long_url    = $room_url;
+        return $long_url;
         $now         = date('Y-m-d H:i:s',time());  
         $expire_date = date("Y-m-d",strtotime("+10years",strtotime($now)));
         $info =  self::getShortUrl($long_url, $expire_date);
@@ -426,6 +485,9 @@ class ExhibitiontemplateSMSWorker extends BaseWorker implements Worker
         $clientDomainName    = ! empty( $data['client_domain_name'] ) ? $data['client_domain_name'] :  self::hebeiurl;//展会模板的个人用户域名  
         $exhibitorsId        = ! empty( $data['exhibitors_id'] ) ? $data['exhibitors_id'] : '';
         $http_host_source    = ! empty( $data['http_host_source'] ) ? $data['http_host_source'] : '';
+        $email_info          = self::exhibitionInfo($http_host_source);
+        $cityinfo            = $email_info['city'];
+        $timeinfo            = $email_info['time'];
         $userInfoAll  = [
             $userMyId,
             $userToId,
@@ -446,7 +508,7 @@ class ExhibitiontemplateSMSWorker extends BaseWorker implements Worker
                 //邮件发送
                 $name = $first_name ? $first_name : $user_name;
                 if($email && $name ) {
-                    $subject = '[2021 Brand Online Promotion] Reminder of upcoming appointment';
+                    $subject = '['.$cityinfo.'] Reminder of upcoming appointment';
                     $content = 'Dear '.$name.',<br/><br/>
 
                     Your next video meeting starts in 10 minutes, please click <a href="'.$activity.'">HERE</a> to start the video conference:<br/><br/>
@@ -530,7 +592,7 @@ class ExhibitiontemplateSMSWorker extends BaseWorker implements Worker
     }
 
 
-    function send_mail_CECZ($name, $email, $subject, $content, $head = 'China', $notification=false) {    
+    function send_mail_CECZ($name, $email, $subject, $content, $head = 'Hebei', $notification=false) {    
         $mail = new PHPMailer(true); //PHPMailer对象
     
         $host = $this->config['smtp_host'];
@@ -575,25 +637,34 @@ class ExhibitiontemplateSMSWorker extends BaseWorker implements Worker
     public function actionTaskDataSMSMeetSendCancel($data_info = '') {
         $data           = $data_info['data'];
         $meetId         = $data['meetId'];//会议ID
+        $meetData =  self::selectAppointmentInfo($meetId, 4); //会议信息
+        if($meetData) {
+            $meetInfo = $meetData[0];
+            $http_host_source  = $meetInfo['http_host_source'];
+        }    
         $userMyId       = ! empty( $data['userMyId'] ) ? $data['userMyId'] : '';//用户ID 
         $userToId       = ! empty( $data['userToId'] ) ? $data['userToId'] : '';//用户ID 
         $selectedDay    = ! empty( $data['selectedDay'] ) ? $data['selectedDay'] : '';//日期
         $deleteDate     = ! empty( $data['deleteDate'] ) ? $data['deleteDate'] : '';//时间段 
         $exhibitorsId     = ! empty( $data['exhibitorsId'] ) ? $data['exhibitorsId'] : '';//展示ID 
         $clientDomainName = ! empty( $data['clientDomainName'] ) ? $data['clientDomainName'] : self::hebeiurl;//展会模板的个人用户域名  
-        self::ChinaSendCancelEmail($userToId,$exhibitorsId,$selectedDay,$deleteDate, $clientDomainName);//中方发送取消
-        self::WaiFanSendCancelEmail($userMyId,$exhibitorsId,$selectedDay,$deleteDate, $clientDomainName);//外方发送取消
+        self::ChinaSendCancelEmail($userToId,$exhibitorsId,$selectedDay,$deleteDate, $clientDomainName,$http_host_source);//中方发送取消
+        self::WaiFanSendCancelEmail($userMyId,$exhibitorsId,$selectedDay,$deleteDate, $clientDomainName,$http_host_source);//外方发送取消
         return true;
     }
     /**
      * 中方发送取消邮件
      */
-    public function ChinaSendCancelEmail($userID, $exhibitorsId = '', $selectedDay = '', $delete_date = '', $clientDomainName = '') {
+    public function ChinaSendCancelEmail($userID, $exhibitorsId = '', $selectedDay = '', $delete_date = '', $clientDomainName = '', $http_host_source = '') {
         $send_mail = $nameEn = '';
         $userInfo =  self::selectAppointmentInfo($userID, 3); //关联查出我的收到预约列表人数
 
         $exhibitorsInfo =  self::selectAppointmentInfo($exhibitorsId, 5); //展示信息
         $nameEn = !empty($exhibitorsInfo) ? $exhibitorsInfo[0]['nameEn'] : '';
+
+        $email_info          = self::exhibitionInfo($http_host_source);
+        $cityinfo            = $email_info['city'];
+        $timeinfo            = $email_info['time'];
 
         if($userInfo) {
             $value = $userInfo[0];
@@ -603,14 +674,14 @@ class ExhibitiontemplateSMSWorker extends BaseWorker implements Worker
             //邮件发送
             $name = $first_name ? $first_name : $user_name;
             if($email && $name ) {
-                $subject = '[2021 Brand Online Promotion] Appointment cancellation';
+                $subject = '['.$cityinfo.'] Appointment cancellation';
                 $content = 'Dear '.$name.',<br/><br/>
 
                 Your appointment has been cancelled by the buyer:<br/><br/>
 
                 Buyer: '.$nameEn.'. <br/><br/>
                 Date：'.$selectedDay.' <br/><br/>
-                Budapest Time: '.self::hours_info_all($delete_date,2).' <br/><br/>
+                America Time: '.self::hours_info_all($delete_date,2).' <br/><br/>
                 Beijing Time: '.$delete_date.' <br/><br/>
               
                 Yours truly <br/><br/>
@@ -624,12 +695,17 @@ class ExhibitiontemplateSMSWorker extends BaseWorker implements Worker
      /**
      * 外方发送取消邮件
      */
-    public function WaiFanSendCancelEmail($userID, $exhibitorsId = '', $selectedDay = '', $delete_date = '', $clientDomainName = '') {
+    public function WaiFanSendCancelEmail($userID, $exhibitorsId = '', $selectedDay = '', $delete_date = '', $clientDomainName = '', $http_host_source = '') {
         $send_mail = $nameEn = '';
         $userInfo =  self::selectAppointmentInfo($userID, 3); //关联查出我的收到预约列表人数
 
         $exhibitorsInfo =  self::selectAppointmentInfo($exhibitorsId, 5); //展示信息
         $nameEn = !empty($exhibitorsInfo) ? $exhibitorsInfo[0]['nameEn'] : '';
+
+        $email_info          = self::exhibitionInfo($http_host_source);
+        $cityinfo            = $email_info['city'];
+        $timeinfo            = $email_info['time'];
+
         if($userInfo) {
             $value = $userInfo[0];
             $email        = ! empty( $value['email'] )        ? $value['email'] : ''; 
@@ -638,12 +714,12 @@ class ExhibitiontemplateSMSWorker extends BaseWorker implements Worker
             //邮件发送
             $name = $first_name ? $first_name : $user_name;
             if($email && $name ) {
-                $subject = '[2021 Brand Online Promotion] Appointment cancellation';
+                $subject = '['.$cityinfo.'] Appointment cancellation';
                 $content = 'Dear '.$name.',<br/><br/>
                 Your have successfully cancelled your appointment :<br/><br/>
                 Supplier: '.$nameEn.'. <br/><br/>
                 Date：'.$selectedDay.' <br/><br/>
-                Budapest Time: '.self::hours_info_all($delete_date,2).' <br/><br/>
+                America Time: '.self::hours_info_all($delete_date,2).' <br/><br/>
                 Beijing Time: '.$delete_date.' <br/><br/>
                 Yours truly<br/>
                 The Organisers';
@@ -659,47 +735,136 @@ class ExhibitiontemplateSMSWorker extends BaseWorker implements Worker
             '09:30-10:00',
             '10:00-10:30',
             '10:30-11:00',
+            '11:00-11:30',
+            '11:30-12:00',
+            '12:00-12:30',
+            '12:30-13:00',
+            '13:00-13:30',
+            '13:30-14:00',
+            '14:00-14:30',
+            '14:30-15:00',
+            '15:00-15:30',
             '15:30-16:00',
             '16:00-16:30',
             '16:30-17:00',
             '17:00-17:30',
             '17:30-18:00',
             '18:00-18:30',
+            '18:30-19:00',
+            '19:00-19:30',
+            '19:30-20:00',
+            '20:00-20:30',
+            '20:30-21:00',
+            '21:00-21:30',
+            '21:30-22:00',
         ];
 
-        $data_buda = [
+        /*$data_buda = [
             '09:00-09:30' => '02:00-02:30',
             '09:30-10:00' => '02:30-03:00',
             '10:00-10:30' => '03:00-03:30',
             '10:30-11:00' => '03:30-04:00',
-            '15:30-16:00' => '08:30-09:00',
-            '16:00-16:30' => '09:00-09:30',
-            '16:30-17:00' => '09:30-10:00',
-            '17:00-17:30' => '10:00-10:30',
-            '17:30-18:00' => '10:30-11:00',
+            '11:00-11:30' => '04:00-04:30',
+            '11:30-12:00' => '04:30-05:00',
+            '12:00-12:30' => '05:00-05:30',
+            '12:30-13:00' => '05:30-06:00',
+            '13:00-13:30' => '06:00-06:30',
+            '13:30-14:00' => '06:30-07:00',
+            '14:00-14:30' => '07:00-07:30',
+            '14:30-15:00' => '07:30-08:00',
+            '15:00-15:30' => '08:00-08:30',
+            '15:30-16:00' => '09:30-10:00',//预约页，我们现在和北京的时差是6个小时
+            '16:00-16:30' => '10:00-10:30',//预约页，我们现在和北京的时差是6个小时
+            '16:30-17:00' => '10:30-11:00',//预约页，我们现在和北京的时差是6个小时
+            '17:00-17:30' => '11:00-11:30',//预约页，我们现在和北京的时差是6个小时
+            '17:30-18:00' => '11:30-12:00',//预约页，我们现在和北京的时差是6个小时
             '18:00-18:30' => '11:00-11:30',
+            '18:30-19:00' => '11:30-12:00',
+            '19:00-19:30' => '12:00-12:30',
+            '19:30-20:00' => '12:30-13:00',
+            '20:00-20:30' => '13:00-13:30',
+            '20:30-21:00' => '13:30-14:00',
+            '21:00-21:30' => '14:00-14:30',
+            '21:30-22:00' => '14:30-15:00',
+        ];*/
+        $data_buda = [
+            '09:00-09:30' => '21:00-21:30',
+            '09:30-10:00' => '21:30-22:00',
+            '10:00-10:30' => '22:00-22:30',
+            '10:30-11:00' => '22:30-23:00',
+            '11:00-11:30' => '23:00-23:30',
+            '11:30-12:00' => '23:30-24:00',
+            '12:00-12:30' => '00:00-00:30',
+            '12:30-13:00' => '00:30-01:00',
+            '13:00-13:30' => '01:00-01:30',
+            '13:30-14:00' => '01:30-02:00',
+            '14:00-14:30' => '02:00-02:30',
+            '14:30-15:00' => '02:30-03:00',
+            '15:00-15:30' => '03:00-03:30',
+            '15:30-16:00' => '03:30-04:00',//1
+            '16:00-16:30' => '04:00-04:30',
+            '16:30-17:00' => '04:30-05:00',
+            '17:00-17:30' => '05:00-05:30',
+            '17:30-18:00' => '05:30-06:00',
+            '18:00-18:30' => '06:00-06:30',
+            '18:30-19:00' => '06:30-07:00',
+            '19:00-19:30' => '07:00-07:30',
+            '19:30-20:00' => '07:30-08:00',
+            '20:00-20:30' => '08:00-08:30',
+            '20:30-21:00' => '08:30-09:00',
+            '21:00-21:30' => '09:00-09:30',
+            '21:30-22:00' => '09:30-10:00',
         ];
-        $data_yindu = [
-            '09:00-09:30' => '06:30-07:00',
-            '09:30-10:00' => '07:00-07:30',
-            '10:00-10:30' => '07:30-08:00',
-            '10:30-11:00' => '08:00-08:30',
-            '15:30-16:00' => '13:00-13:30',
-            '16:00-16:30' => '13:30-14:00',
-            '16:30-17:00' => '14:00-14:30',
-            '17:00-17:30' => '14:30-15:00',
-            '17:30-18:00' => '15:00-15:30',
-            '18:00-18:30' => '15:30-16:00',
-        ];
-        if($flag == 1) {
-            return $data;
-        } else if($flag == 2) {
-            return  $data_buda[$key];
-        } else if($flag == 3) {
-            return  $data_yindu[$key];
-        }
-        // return $flag == 2 ? $data_buda[$key] : $data;
+        return $flag == 2 ? $data_buda[$key] : $data;
     }
+
+    // public function hours_info_all($key = '',$flag = 1) {
+    //     $data = [
+    //         '09:00-09:30',
+    //         '09:30-10:00',
+    //         '10:00-10:30',
+    //         '10:30-11:00',
+    //         '15:30-16:00',
+    //         '16:00-16:30',
+    //         '16:30-17:00',
+    //         '17:00-17:30',
+    //         '17:30-18:00',
+    //         '18:00-18:30',
+    //     ];
+
+    //     $data_buda = [
+    //         '09:00-09:30' => '02:00-02:30',
+    //         '09:30-10:00' => '02:30-03:00',
+    //         '10:00-10:30' => '03:00-03:30',
+    //         '10:30-11:00' => '03:30-04:00',
+    //         '15:30-16:00' => '08:30-09:00',
+    //         '16:00-16:30' => '09:00-09:30',
+    //         '16:30-17:00' => '09:30-10:00',
+    //         '17:00-17:30' => '10:00-10:30',
+    //         '17:30-18:00' => '10:30-11:00',
+    //         '18:00-18:30' => '11:00-11:30',
+    //     ];
+    //     $data_yindu = [
+    //         '09:00-09:30' => '06:30-07:00',
+    //         '09:30-10:00' => '07:00-07:30',
+    //         '10:00-10:30' => '07:30-08:00',
+    //         '10:30-11:00' => '08:00-08:30',
+    //         '15:30-16:00' => '13:00-13:30',
+    //         '16:00-16:30' => '13:30-14:00',
+    //         '16:30-17:00' => '14:00-14:30',
+    //         '17:00-17:30' => '14:30-15:00',
+    //         '17:30-18:00' => '15:00-15:30',
+    //         '18:00-18:30' => '15:30-16:00',
+    //     ];
+    //     if($flag == 1) {
+    //         return $data;
+    //     } else if($flag == 2) {
+    //         return  $data_buda[$key];
+    //     } else if($flag == 3) {
+    //         return  $data_yindu[$key];
+    //     }
+    //     // return $flag == 2 ? $data_buda[$key] : $data;
+    // }
 
 
 
