@@ -266,13 +266,13 @@ class ExhibitiontemplateSMSWorker extends BaseWorker implements Worker
                 'city' => 'Hebei B2B Online Meeting',
                 'time' => 'November 15-19, 2021.'
             ],
-            147 => [//河北 河北品牌“云”上行-建材及石油展  （2021年11月18-22日） 
+            147 => [//河北 河北品牌“云”上行-建材及石油展  （2021年12月6-10日） 
                 'city' => 'Hebei B2B Online Meeting',
-                'time' => 'November 18-22, 2021.'
+                'time' => 'December 6-10, 2021.'
             ],
             148 => [//河北 河北品牌“云”上行-农业及畜牧展（2021年11月24-28）
                 'city' => 'Hebei B2B Online Meeting',
-                'time' => 'November 24-28, 2021.'
+                'time' => 'December 13-17, 2021.'
             ],
             149 => [//河北 河北品牌“云”上行-汽车、两轮展  （2021年12月14-18日）
                 'city' => 'Hebei B2B Online Meeting',
