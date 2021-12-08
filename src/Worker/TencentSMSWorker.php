@@ -125,6 +125,8 @@ class TencentSMSWorker extends BaseWorker implements Worker
     }
 
     const zdourl = 'https://chinabrandfair.eovobo.com/';//中东欧
+    const hburl  = 'https://hebei.eovobo.com/';//河北
+    const nmurl  = 'https://www.efair123.com/';//内蒙古
 
 
     /*-------------20210409请求报价 提交意向订单 给 卖家发送邮件 触发队列邮件接口 开始--------------*/
@@ -247,11 +249,15 @@ class TencentSMSWorker extends BaseWorker implements Worker
             ],
             145 => [//河北
                 'city' => 'Hebei B2B Online Meeting',
-                'time' => 'December 7-10, 2021.'
+                'time' => 'December 6-8, 2021.'
             ],
             151 => [//中东欧的展会eovobo  （2021年12月13日至17日）
                 'city' => '2021 China Brand Online Fair',
                 'time' => 'December 13-17, 2021.'
+            ],
+            152 => [//内蒙古  （2021年11月23日至25日）  12月13-15
+                'city' => 'Neimenggu B2B Online Meeting',
+                'time' => 'December 13-15, 2021.'
             ],
         ];
 
@@ -278,13 +284,28 @@ class TencentSMSWorker extends BaseWorker implements Worker
         $meetData =  self::selectAppointmentInfo($meetId, 4); //会议信息
         if($meetData) {
             $meetInfo = $meetData[0];
+            $exhibitorsId = $meetInfo['exhibitors_id'];
             $nameEn       = $meetInfo['nameEn'];
             $selectedDay  = date('Y-m-d', $meetInfo['add_open_time'] );
             $delete_date  = date('H:i', $meetInfo['add_open_time'] ).'-'. date('H:i', $meetInfo['add_stop_time'] );
         }    
         if($userInfo) {
             $value = $userInfo[0];
-            $sendUrl  = self::zdourl.'index.php?app=User/automaticLogin&userId='.$userID.'&meetId='.$meetId.'&id=' . $eid;
+            if($eid == 145) 
+            {
+                // $sendUrl  = self::hburl.'index.php?app=User/automaticLogin&userId='.$userID.'&meetId='.$meetId.'&id=' . $eid;
+                $sendUrl  = self::hburl.'index.php?app=expo/automaticLogin&flag=private&expoId='.$eid.'&userId='.$userID.'&meetId='.$meetId.'&exhibitorsId='.$exhibitorsId;
+
+            } 
+            else if ($eid == 152)  
+            {
+                $sendUrl  = self::nmurl.'index.php?app=expo/automaticLogin&flag=private&expoId='.$eid.'&userId='.$userID.'&meetId='.$meetId.'&exhibitorsId='.$exhibitorsId;
+            } 
+            else 
+            {
+                $sendUrl  = self::zdourl.'index.php?app=User/automaticLogin&userId='.$userID.'&meetId='.$meetId.'&id=' . $eid;
+            }
+            // $sendUrl  = self::zdourl.'index.php?app=User/automaticLogin&userId='.$userID.'&meetId='.$meetId.'&id=' . $eid;
             $activity = self::shortConnection($sendUrl, 4);//短连链接
             $email        = ! empty( $value['email'] )        ? $value['email'] : ''; 
             $first_name   = ! empty( $value['first_name'] )   ? $value['first_name'] : ''; 
@@ -334,6 +355,7 @@ class TencentSMSWorker extends BaseWorker implements Worker
         $meetData =  self::selectAppointmentInfo($meetId, 4); //会议信息
         if($meetData) {
             $meetInfo = $meetData[0];
+            $exhibitorsId = $meetInfo['exhibitors_id'];
             $nameEn       = $meetInfo['nameEn'];
             $selectedDay  = date('Y-m-d', $meetInfo['add_open_time'] );
             $delete_date  = date('H:i', $meetInfo['add_open_time'] ).'-'. date('H:i', $meetInfo['add_stop_time'] );
@@ -341,7 +363,21 @@ class TencentSMSWorker extends BaseWorker implements Worker
         $userInfo =  self::selectAppointmentInfo($userID, 3); //关联查出我的收到预约列表人数
         if($userInfo) {
             $value = $userInfo[0];
-            $sendUrl = self::zdourl.'index.php?app=User/automaticLogin&userId='.$userID.'&meetId='.$meetId.'&id='.$eid;
+            if($eid == 145) 
+            {
+                // $sendUrl = self::hburl.'index.php?app=User/automaticLogin&userId='.$userID.'&meetId='.$meetId.'&id='.$eid;
+                $sendUrl  = self::hburl.'index.php?app=expo/automaticLogin&flag=private&expoId='.$eid.'&userId='.$userID.'&meetId='.$meetId.'&exhibitorsId='.$exhibitorsId;
+
+            } 
+            else if ($eid == 152)  
+            {
+                $sendUrl  = self::nmurl.'index.php?app=expo/automaticLogin&flag=private&expoId='.$eid.'&userId='.$userID.'&meetId='.$meetId.'&exhibitorsId='.$exhibitorsId;
+            } 
+            else 
+            {
+                $sendUrl = self::zdourl.'index.php?app=User/automaticLogin&userId='.$userID.'&meetId='.$meetId.'&id='.$eid;
+            }
+            // $sendUrl = self::zdourl.'index.php?app=User/automaticLogin&userId='.$userID.'&meetId='.$meetId.'&id='.$eid;
             $activity = self::shortConnection($sendUrl, 4);//短连链接
             $email        = ! empty( $value['email'] )        ? $value['email'] : ''; 
             $first_name   = ! empty( $value['first_name'] )   ? $value['first_name'] : ''; 
@@ -564,7 +600,7 @@ class TencentSMSWorker extends BaseWorker implements Worker
             //用户信息
             $sql  = "SELECT  mobile_phone,email,first_name, user_name,ccode, `address`  FROM  p46_users  WHERE user_id = '$ID'";
         } else if($type == 4) {
-            $sql = 'SELECT ua.name__en as nameEn, ni.add_open_time, ni.add_stop_time FROM p46_user_apply as ua JOIN p46_negotiation_info as ni ON ua.id = ni.exhibitors_id WHERE ni.id = ' . $ID;
+            $sql = 'SELECT ua.name__en as nameEn, ni.add_open_time, ni.add_stop_time,ni.exhibitors_id,http_host_source FROM p46_user_apply as ua JOIN p46_negotiation_info as ni ON ua.id = ni.exhibitors_id WHERE ni.id = ' . $ID;
         } else if($type == 5) {
             $sql = 'SELECT name__en as nameEn  FROM p46_user_apply  WHERE id = ' . $ID;
         } else if($type == 6) {
@@ -662,6 +698,9 @@ class TencentSMSWorker extends BaseWorker implements Worker
         $ID = $meetId = $data['id'];
         $userMyId     = ! empty( $data['user_my_id'] ) ? $data['user_my_id'] : ''; 
         $userToId     = ! empty( $data['user_to_id'] ) ? $data['user_to_id'] : ''; 
+        $clientDomainName    = ! empty( $data['client_domain_name'] ) ? $data['client_domain_name'] :  self::zdourl;//展会模板的个人用户域名  
+        $exhibitorsId        = ! empty( $data['exhibitors_id'] ) ? $data['exhibitors_id'] : '';
+        $http_host_source    = ! empty( $data['http_host_source'] ) ? $data['http_host_source'] : '';
         $userInfoAll  = [
             $userMyId,
             $userToId,
@@ -681,7 +720,21 @@ class TencentSMSWorker extends BaseWorker implements Worker
             $userInfo =  self::selectAppointmentInfo($userID, 3); //关联查出我的收到预约列表人数
             if($userInfo) {
                 $value = $userInfo[0];
-                $sendUrl  = self::zdourl.'index.php?app=User/automaticLogin&userId='.$userID.'&meetId='.$meetId.'&id='.$eid;
+                if($eid == 145) 
+                {
+                    // $sendUrl  = self::hburl.'index.php?app=User/automaticLogin&userId='.$userID.'&meetId='.$meetId.'&id='.$eid;
+                    $sendUrl  = self::hburl.'index.php?app=expo/automaticLogin&flag=private&expoId='.$eid.'&userId='.$userID.'&meetId='.$meetId.'&exhibitorsId='.$exhibitorsId;
+
+                } 
+                else if ($eid == 152)  
+                {
+                    $sendUrl  = self::nmurl.'index.php?app=expo/automaticLogin&flag=private&expoId='.$eid.'&userId='.$userID.'&meetId='.$meetId.'&exhibitorsId='.$exhibitorsId;
+                } 
+                else 
+                {
+                    $sendUrl  = self::zdourl.'index.php?app=User/automaticLogin&userId='.$userID.'&meetId='.$meetId.'&id='.$eid;
+                }
+                // $sendUrl  = self::zdourl.'index.php?app=User/automaticLogin&userId='.$userID.'&meetId='.$meetId.'&id='.$eid;
                 $activity = self::shortConnection($sendUrl, 4);//短连链接
                 $email        = ! empty( $value['email'] )        ? $value['email'] : ''; 
                 $first_name   = ! empty( $value['first_name'] )   ? $value['first_name'] : ''; 
