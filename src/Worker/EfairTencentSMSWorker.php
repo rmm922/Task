@@ -153,7 +153,7 @@ class EfairTencentSMSWorker extends BaseWorker implements Worker
             ],
             148 => [//河北 河北品牌“云”上行-农业及畜牧展（2021年11月24-28）
                 'city' => 'Hebei B2B Online Meeting',
-                'time' => 'November 24-28, 2021.'
+                'time' => 'December 13-17, 2021.'
             ],
             149 => [//河北 河北品牌“云”上行-汽车、两轮展  （2021年12月14-18日）
                 'city' => 'Hebei B2B Online Meeting',
@@ -207,7 +207,8 @@ class EfairTencentSMSWorker extends BaseWorker implements Worker
 
                 Buyer: '.$nameEn.'. <br/><br/>
                 Date：'.$selectedDay.' <br/><br/>
-                Budapest Time: '.self::hours_info_all($delete_date,2).' <br/><br/>
+                Germany Time: '.self::hours_info_all($delete_date,2).' <br/><br/>
+                America Time: '.self::hours_info_all($delete_date,3).' <br/><br/>
                 Beijing Time: '.$delete_date.' <br/><br/>
 
 
@@ -262,7 +263,8 @@ class EfairTencentSMSWorker extends BaseWorker implements Worker
                 Thank you for making appointments with your Chinese partner companies at the '.$cityinfo.'. Please find below the summary of your appointments: <br/><br/>
                 Supplier: '.$nameEn.'. <br/><br/>
                 Date：'.$selectedDay.' <br/><br/>
-                Budapest Time: '.self::hours_info_all($delete_date,2).' <br/><br/>
+                Germany Time: '.self::hours_info_all($delete_date,2).' <br/><br/>
+                America Time: '.self::hours_info_all($delete_date,3).' <br/><br/>
                 Beijing Time: '.$delete_date.' <br/><br/>
                 Should you wish to change an appointment or make a new one, please click <a href="'.$activity.'">HERE</a> . <br/><br/>
                 Looking forward to meeting you at the '.$cityinfo.': '.$timeinfo.'<br/><br/>
@@ -565,7 +567,8 @@ class EfairTencentSMSWorker extends BaseWorker implements Worker
 
                 Buyer: '.$nameEn.'. <br/><br/>
                 Date：'.$selectedDay.' <br/><br/>
-                Budapest Time: '.self::hours_info_all($delete_date,2).' <br/><br/>
+                Germany Time: '.self::hours_info_all($delete_date,2).' <br/><br/>
+                America Time: '.self::hours_info_all($delete_date,3).' <br/><br/>
                 Beijing Time: '.$delete_date.' <br/><br/>
               
                 Yours truly <br/><br/>
@@ -606,7 +609,8 @@ class EfairTencentSMSWorker extends BaseWorker implements Worker
                 Your have successfully cancelled your appointment :<br/><br/>
                 Supplier: '.$nameEn.'. <br/><br/>
                 Date：'.$selectedDay.' <br/><br/>
-                Budapest Time: '.self::hours_info_all($delete_date,2).' <br/><br/>
+                Germany Time: '.self::hours_info_all($delete_date,2).' <br/><br/>
+                America Time: '.self::hours_info_all($delete_date,3).' <br/><br/>
                 Beijing Time: '.$delete_date.' <br/><br/>
                 Yours truly<br/>
                 The Organisers';
@@ -646,7 +650,7 @@ class EfairTencentSMSWorker extends BaseWorker implements Worker
             '21:30-22:00',
         ];
 
-        $data_buda = [
+        $data_buda = [// 德国
             '09:00-09:30' => '02:00-02:30',
             '09:30-10:00' => '02:30-03:00',
             '10:00-10:30' => '03:00-03:30',
@@ -659,12 +663,12 @@ class EfairTencentSMSWorker extends BaseWorker implements Worker
             '13:30-14:00' => '06:30-07:00',
             '14:00-14:30' => '07:00-07:30',
             '14:30-15:00' => '07:30-08:00',
-            '15:00-15:30' => '09:00-09:30',//预约页，我们现在和北京的时差是6个小时
-            '15:30-16:00' => '09:30-10:00',//预约页，我们现在和北京的时差是6个小时
-            '16:00-16:30' => '10:00-10:30',//预约页，我们现在和北京的时差是6个小时
-            '16:30-17:00' => '10:30-11:00',//预约页，我们现在和北京的时差是6个小时
-            '17:00-17:30' => '11:00-11:30',//预约页，我们现在和北京的时差是6个小时
-            '17:30-18:00' => '11:30-12:00',//预约页，我们现在和北京的时差是6个小时
+            '15:00-15:30' => '08:00-08:30',//预约页，我们现在和北京的时差是6个小时
+            '15:30-16:00' => '08:30-09:00',//预约页，我们现在和北京的时差是6个小时
+            '16:00-16:30' => '09:00-09:30',//预约页，我们现在和北京的时差是6个小时
+            '16:30-17:00' => '09:30-10:00',//预约页，我们现在和北京的时差是6个小时
+            '17:00-17:30' => '10:00-10:30',//预约页，我们现在和北京的时差是6个小时
+            '17:30-18:00' => '10:30-11:00',//预约页，我们现在和北京的时差是6个小时
             '18:00-18:30' => '11:00-11:30',
             '18:30-19:00' => '11:30-12:00',
             '19:00-19:30' => '12:00-12:30',
@@ -674,55 +678,88 @@ class EfairTencentSMSWorker extends BaseWorker implements Worker
             '21:00-21:30' => '14:00-14:30',
             '21:30-22:00' => '14:30-15:00',
         ];
-        return $flag == 2 ? $data_buda[$key] : $data;
-    }
-    /*public function hours_info_all($key = '',$flag = 1) {
-        $data = [
-            '09:00-09:30',
-            '09:30-10:00',
-            '10:00-10:30',
-            '10:30-11:00',
-            '15:30-16:00',
-            '16:00-16:30',
-            '16:30-17:00',
-            '17:00-17:30',
-            '17:30-18:00',
-            '18:00-18:30',
-        ];
 
-        $data_buda = [
-            '09:00-09:30' => '02:00-02:30',
-            '09:30-10:00' => '02:30-03:00',
+        /*$data_yindu = [
+            '09:00-09:30' => '06:30-07:00',
+            '09:30-10:00' => '07:00-07:30',
             '10:00-10:30' => '03:00-03:30',
             '10:30-11:00' => '03:30-04:00',
+            '11:00-11:30' => '04:00-04:30',
+            '11:30-12:00' => '04:30-05:00',
+            '12:00-12:30' => '05:00-05:30',
+            '12:30-13:00' => '05:30-06:00',
+            '13:00-13:30' => '06:00-06:30',
+            '13:30-14:00' => '06:30-07:00',
+            '14:00-14:30' => '07:00-07:30',
+            '14:30-15:00' => '07:30-08:00',
+            '15:00-15:30' => '08:00-08:30',
             '15:30-16:00' => '08:30-09:00',
             '16:00-16:30' => '09:00-09:30',
             '16:30-17:00' => '09:30-10:00',
             '17:00-17:30' => '10:00-10:30',
             '17:30-18:00' => '10:30-11:00',
             '18:00-18:30' => '11:00-11:30',
+            '18:30-19:00' => '11:30-12:00',
+            '19:00-19:30' => '12:00-12:30',
+            '19:30-20:00' => '12:30-13:00',
+            '20:00-20:30' => '13:00-13:30',
+            '20:30-21:00' => '13:30-14:00',
+            '21:00-21:30' => '14:00-14:30',
+            '21:30-22:00' => '14:30-15:00',
+        ];*/
+        $data_yindu = [// 美国
+            '09:00-09:30' => '21:00-21:30',
+            '09:30-10:00' => '21:30-22:00',
+            '10:00-10:30' => '22:00-22:30',
+            '10:30-11:00' => '22:30-23:00',
+            '11:00-11:30' => '23:00-23:30',
+            '11:30-12:00' => '23:30-24:00',
+            '12:00-12:30' => '00:00-00:30',
+            '12:30-13:00' => '00:30-01:00',
+            '13:00-13:30' => '01:00-01:30',
+            '13:30-14:00' => '01:30-02:00',
+            '14:00-14:30' => '02:00-02:30',
+            '14:30-15:00' => '02:30-03:00',
+            '15:00-15:30' => '03:00-03:30',
+            '15:30-16:00' => '03:30-04:00',//1
+            '16:00-16:30' => '04:00-04:30',
+            '16:30-17:00' => '04:30-05:00',
+            '17:00-17:30' => '05:00-05:30',
+            '17:30-18:00' => '05:30-06:00',
+            '18:00-18:30' => '06:00-06:30',
+            '18:30-19:00' => '06:30-07:00',
+            '19:00-19:30' => '07:00-07:30',
+            '19:30-20:00' => '07:30-08:00',
+            '20:00-20:30' => '08:00-08:30',
+            '20:30-21:00' => '08:30-09:00',
+            '21:00-21:30' => '09:00-09:30',
+            '21:30-22:00' => '09:30-10:00',
         ];
-        $data_yindu = [
-            '09:00-09:30' => '06:30-07:00',
-            '09:30-10:00' => '07:00-07:30',
-            '10:00-10:30' => '07:30-08:00',
-            '10:30-11:00' => '08:00-08:30',
-            '15:30-16:00' => '13:00-13:30',
-            '16:00-16:30' => '13:30-14:00',
-            '16:30-17:00' => '14:00-14:30',
-            '17:00-17:30' => '14:30-15:00',
-            '17:30-18:00' => '15:00-15:30',
-            '18:00-18:30' => '15:30-16:00',
+
+        //孟买
+        $data_menmai = [
+            '09:00-09:30' => '07:00-07:30',//
+            '09:30-10:00' => '07:30-08:00',//
+            '10:00-10:30' => '08:00-08:30',//
+            '10:30-11:00' => '08:30-09:00',//
+            '15:30-16:00' => '13:30-14:00',//
+            '16:00-16:30' => '14:00-14:30',//
+            '16:30-17:00' => '14:30-15:00',//
+            '17:00-17:30' => '15:00-15:30',//
+            '17:30-18:00' => '15:30-16:00',//
+            '18:00-18:30' => '16:00-16:30',//
         ];
+
         if($flag == 1) {
             return $data;
         } else if($flag == 2) {
             return  $data_buda[$key];
         } else if($flag == 3) {
             return  $data_yindu[$key];
+        } else if($flag == 4) {
+            return  $data_menmai[$key];
         }
-        // return $flag == 2 ? $data_buda[$key] : $data;
-    }*/
+    }
 
     //  关闭链接
     public function __destruct() {

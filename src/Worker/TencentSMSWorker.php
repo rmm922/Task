@@ -226,7 +226,7 @@ class TencentSMSWorker extends BaseWorker implements Worker
         $userMyId     = ! empty( $data['userMyId'] ) ? $data['userMyId'] : '';//用户ID  外国游客
         $userToId     = ! empty( $data['userToId'] ) ? $data['userToId'] : '';//用户ID  中国企业
         $SendWaiFanInfo =  self::SendWaiFanInfo($meetId, $userMyId, $userToId);//userMyId外国企业
-        $SendChinaInfo  =  self::SendChinaInfo($meetId, $userToId);//userToId中国企业
+        $SendChinaInfo  =  self::SendChinaInfo($meetId, $userToId, $userMyId);//userToId中国企业
         return true;
     }
 
@@ -270,9 +270,16 @@ class TencentSMSWorker extends BaseWorker implements Worker
      * meetId
      * userToId
     */
-    public function SendChinaInfo ($meetId,$userID) {
+    public function SendChinaInfo ($meetId,$userID, $userMyId) {
         $send_mail = $nameEn = $selectedDay = $delete_date = '';
         $userInfo =  self::selectAppointmentInfo($userID, 3); //关联查出我的收到预约列表人数
+
+        // 外方人员信息
+        $toUserInfo = self::selectAppointmentInfo($userMyId, 3); 
+        $tovalue = $toUserInfo[0];
+        $to_first_name   = ! empty( $tovalue['first_name'] )   ? $tovalue['first_name'] : ''; 
+        $to_user_name    = ! empty( $tovalue['user_name'] )    ? $tovalue['user_name'] : ''; 
+        $toname = $to_first_name ? $to_first_name : $to_user_name;
 
         //参加的展会信息 中方企业
         $exhibition_user = self::selectAppointmentInfo($userID, 13);
@@ -318,7 +325,7 @@ class TencentSMSWorker extends BaseWorker implements Worker
 
                 You have a new meeting with an overseas company at the '.$cityinfo.'. Please find below the summary of your appointments: <br/><br/>
 
-                Buyer: '.$nameEn.'. <br/><br/>
+                Buyer: '.$toname.'. <br/><br/>
                 Date：'.$selectedDay.' <br/><br/>
                 Budapest Time: '.self::hours_info_all($delete_date,2).' <br/><br/>
                 Beijing Time: '.$delete_date.' <br/><br/>
@@ -909,16 +916,23 @@ class TencentSMSWorker extends BaseWorker implements Worker
         $selectedDay    = ! empty( $data['selectedDay'] ) ? $data['selectedDay'] : '';//日期
         $deleteDate     = ! empty( $data['deleteDate'] ) ? $data['deleteDate'] : '';//时间段 
         $exhibitorsId     = ! empty( $data['exhibitorsId'] ) ? $data['exhibitorsId'] : '';//展示ID 
-        self::ChinaSendCancelEmail($userToId,$exhibitorsId,$selectedDay,$deleteDate);//中方发送取消
+        self::ChinaSendCancelEmail($userToId,$exhibitorsId,$selectedDay,$deleteDate,$userMyId);//中方发送取消
         self::WaiFanSendCancelEmail($userMyId,$exhibitorsId,$selectedDay,$deleteDate, $userToId);//外方发送取消
         return true;
     }
     /**
      * 中方发送取消邮件
      */
-    public function ChinaSendCancelEmail($userID, $exhibitorsId = '', $selectedDay = '', $delete_date = '') {
+    public function ChinaSendCancelEmail($userID, $exhibitorsId = '', $selectedDay = '', $delete_date = '', $userMyId = '') {
         $send_mail = $nameEn = '';
         $userInfo =  self::selectAppointmentInfo($userID, 3); //关联查出我的收到预约列表人数
+
+        // 外方人员信息
+        $toUserInfo = self::selectAppointmentInfo($userMyId, 3); 
+        $tovalue = $toUserInfo[0];
+        $to_first_name   = ! empty( $tovalue['first_name'] )   ? $tovalue['first_name'] : ''; 
+        $to_user_name    = ! empty( $tovalue['user_name'] )    ? $tovalue['user_name'] : ''; 
+        $toname = $to_first_name ? $to_first_name : $to_user_name;
 
         $exhibitorsInfo =  self::selectAppointmentInfo($exhibitorsId, 5); //展示信息
         $nameEn = !empty($exhibitorsInfo) ? $exhibitorsInfo[0]['nameEn'] : '';
@@ -943,7 +957,7 @@ class TencentSMSWorker extends BaseWorker implements Worker
 
                 Your appointment has been cancelled by the buyer:<br/><br/>
 
-                Buyer: '.$nameEn.'. <br/><br/>
+                Buyer: '.$toname.'. <br/><br/>
                 Date：'.$selectedDay.' <br/><br/>
                 Budapest Time: '.self::hours_info_all($delete_date,2).' <br/><br/>
                 Beijing Time: '.$delete_date.' <br/><br/>
