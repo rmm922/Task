@@ -50,16 +50,29 @@ class TencentYinpingWorker1 extends BaseWorker implements Worker
         try {
             //反序列化对象
             $data_info = json_decode($this->job->getData(),true);
-            
-            if ($data_info['type'] == 'tencentYinping') {
-                //初始化原住民
+            // 开幕式的视频
+            if ($data_info['type'] == 'tencentYinping') 
+            {
                 $res = $this->actionTencentYinping($data_info);
                 if ($res == 200) {
                     $msg = 'dwk完成处理-tencentYinping--音频翻译-成功';
                 } else {
                     $msg = 'dwk完成处理-tencentYinping--音频翻译-失败' . $res;
                 }
-            } else {
+            }
+            // 自动录屏的数据
+            else if ($data_info['type'] == 'recording_video') 
+            {
+                
+                $res = $this->actionRecordingVideo($data_info);
+                if ($res == 200) {
+                    $msg = 'dwk完成处理-recording_video--音频翻译-成功';
+                } else {
+                    $msg = 'dwk完成处理-recording_video--音频翻译-失败' . $res;
+                }
+            } 
+            else 
+            {
                 $msg  = '参数错误';
             }
             $this->logger->info('job处理成功日志信息输出', [
@@ -146,6 +159,74 @@ class TencentYinpingWorker1 extends BaseWorker implements Worker
        
     }
     
+
+    /**
+     * 云点播服务执行
+     */
+    public function actionRecordingVideo($data = '') {
+        //数据库数据ID
+        $ID           = $data['insertID'];
+        //查出数据
+        $info   =  self::onlyData($ID, 1);
+        $TaskId =  ! empty ( $info['taskId'] ) ? $info['taskId'] : '';
+
+        if( ! empty( $TaskId) ) {
+            $info =  self::TaskIdInfo($TaskId);
+            if( ! empty ( $info['Data'] )  ) {
+                //更新数据库
+                self::update_p46_negotiation_info_video($ID, $info['Data']);
+            }
+            
+        } 
+
+        return true;
+    }
+
+    /**
+     * 更新表数据 更新翻译文字
+     */
+    public function update_p46_negotiation_info_video( $Id = '' , $rsp = '') {
+        if(!$Id) { return false;}
+        $audio_translation_array = '';
+        if($rsp['Result']) {
+            $audio_translation_array  = self::audio_translation_array($rsp['Result']);
+        }    
+        $where = '';
+        if($rsp['Status'] == 2) {
+            $where .= 'tencent_status = 2';
+        } else if($rsp['Status'] == 3) {
+            $where .= 'tencent_status = 1';
+        }
+        if($rsp['Result']) {
+            $where .= ', audio_translation = '. ' "' . trim( $rsp['Result'] ) . '"';
+        }
+        if($audio_translation_array) {
+            $where .= ', audio_translation_text = '. "'" . json_encode($audio_translation_array, JSON_UNESCAPED_UNICODE) ."'";
+        }
+        $this->pdo->query("SET NAMES utf8");
+        $sql  = "UPDATE `p46_negotiation_info_video` SET $where WHERE `vid`=:vid";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute(array(':vid' => $Id));
+       
+    }
+
+    // 查询数据的信息
+    public function onlyData($ID = '', $type = '') {
+        if(!$ID) { return false;}
+        $this->pdo->query("SET NAMES utf8");
+        if($type == 1) {
+            $sql  = "SELECT * FROM p46_negotiation_info_video WHERE vid = $ID";
+        }  
+        $rs = $this->pdo->query($sql);
+        $rs->setFetchMode(\PDO::FETCH_ASSOC);
+        $dbData = $rs->fetchAll();
+        $return_data = [];
+        if($dbData) {
+            $return_data = $dbData[0];
+        }
+        return $return_data;
+    }
+
     /**
      * 压缩回来的信息处理
      */

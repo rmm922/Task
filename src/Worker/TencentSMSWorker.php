@@ -249,7 +249,7 @@ class TencentSMSWorker extends BaseWorker implements Worker
             ],
             145 => [//河北
                 'city' => 'Hebei B2B Online Meeting',
-                'time' => 'December 6-8, 2021.'
+                'time' => 'January 13-20, 2022.'
             ],
             151 => [//中东欧的展会eovobo  （2021年12月13日至17日）
                 'city' => '2021 China Brand Online Fair',

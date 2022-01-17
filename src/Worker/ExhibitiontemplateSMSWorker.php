@@ -260,7 +260,8 @@ class ExhibitiontemplateSMSWorker extends BaseWorker implements Worker
             ],
             145 => [//河北 河北品牌“云”上行-汽配展中东欧专场    （2021年12月6-10日）
                 'city' => 'Hebei B2B Online Meeting',
-                'time' => 'December 6-10, 2021.'
+                // 'time' => 'December 6-10, 2021.'
+                'time' => 'January 13-20, 2022.'
             ],
             146 => [//河北 河北品牌“云”上行-纺织及消费品展（2021年11月15-19日）
                 'city' => 'Hebei B2B Online Meeting',
@@ -268,19 +269,23 @@ class ExhibitiontemplateSMSWorker extends BaseWorker implements Worker
             ],
             147 => [//河北 河北品牌“云”上行-建材及石油展  （2021年12月6-10日） 
                 'city' => 'Hebei B2B Online Meeting',
-                'time' => 'December 6-17, 2021.'
+                // 'time' => 'December 6-17, 2021.'
+                'time' => 'December 6-31, 2021.'
             ],
             148 => [//河北 河北品牌“云”上行-农业及畜牧展（2021年11月24-28）
                 'city' => 'Hebei B2B Online Meeting',
-                'time' => 'December 13-17, 2021.'
+                // 'time' => 'December 13-21, 2021.'
+                'time' => 'December 13-31, 2021.'
             ],
             149 => [//河北 河北品牌“云”上行-汽车、两轮展  （2021年12月14-18日）
                 'city' => 'Hebei B2B Online Meeting',
-                'time' => 'December 14-18, 2021.'
+                // 'time' => 'December 14-18, 2021.'
+                'time' => 'December 14-31, 2021.'
             ],
             150 => [//河北 河北品牌“云”上行-五金工具及自行车展  （2021年12月16-20日）
                 'city' => 'Hebei B2B Online Meeting',
-                'time' => 'December 16-19, 2021.'
+                // 'time' => 'December 16-19, 2021.'
+                'time' => 'January 13-20, 2022.'
             ],
         ];
 
