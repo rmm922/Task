@@ -138,23 +138,28 @@ class TencentImTaskWorker extends BaseWorker implements Worker
                 }
             }
         }
-        $body = [];
-        $body[':user_my_id']     = $userMyId;
-        $body[':user_to_id']     = $userToId;
-        $body[':content']        = ! empty ( $content ) ? $content  : '';
-        $body[':add_time']       = time();
-        $body[':add_ip']         = $ip;  //IP
-        $body[':source_type']    = 1;  //1是手机IM聊天之后的待定
-        $body[':tencent_im']     = $imcontent;  //腾讯IM三方回调来的数据包
-        $body[':im_type']        = ! empty ( $im_type ) ? $im_type  : 'sendText';  //腾讯IM三方回调来的数据包
-        foreach ($body as $key => $value) {
-            $keys_prepare[]  = trim($key);
-            $keys[]          = str_replace(':','',trim($key));
-        }
-        $this->pdo->query("SET NAMES utf8");
-        $sql    =  "INSERT INTO p46_im_message  (".implode(', ', $keys).") VALUES ( ".implode(', ', $keys_prepare).")";
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute($body);
+
+        // 先只记录有值的 cmd指令的回调不管了
+        if($content) {
+            $body = [];
+            $body[':user_my_id']     = $userMyId;
+            $body[':user_to_id']     = $userToId;
+            $body[':content']        = ! empty ( $content ) ? $content  : '';
+            $body[':add_time']       = time();
+            $body[':add_ip']         = $ip;  //IP
+            $body[':source_type']    = 1;  //1是手机IM聊天之后的待定
+            $body[':tencent_im']     = $imcontent;  //腾讯IM三方回调来的数据包
+            $body[':im_type']        = ! empty ( $im_type ) ? $im_type  : 'sendText';  //腾讯IM三方回调来的数据包
+            foreach ($body as $key => $value) {
+                $keys_prepare[]  = trim($key);
+                $keys[]          = str_replace(':','',trim($key));
+            }
+            $this->pdo->query("SET NAMES utf8");
+            $sql    =  "INSERT INTO p46_im_message  (".implode(', ', $keys).") VALUES ( ".implode(', ', $keys_prepare).")";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute($body);
+        } 
+
         return true;
     }
     
