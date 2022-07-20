@@ -287,6 +287,10 @@ class ExhibitiontemplateSMSWorker extends BaseWorker implements Worker
                 // 'time' => 'December 16-19, 2021.'
                 'time' => 'January 13-20, 2022.'
             ],
+            155 => [//黄河流域跨境电商  （2022年8月26-28日）
+                'city' => 'YELLOW RIVER BASIN CROSS-BORDER E-COMMERCE',
+                'time' => 'August 26-28, 2022.'
+            ],
         ];
 
         return $data[$eid] ? $data[$eid] : $data[8];

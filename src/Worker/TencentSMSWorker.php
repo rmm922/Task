@@ -236,8 +236,10 @@ class TencentSMSWorker extends BaseWorker implements Worker
     public function exhibitionInfo($eid = 8) {
         $data = [
             8 => [//芜湖
-                'city' => '2021 China Brand Online Fair',
-                'time' => 'December 13-17, 2021.'
+                // 'city' => '2021 China Brand Online Fair',
+                // 'time' => 'December 13-17, 2021.'
+                'city' => 'Shandong B2B Online Meeting',
+                'time' => 'June 15-17, 2022.'
             ],
             143 => [//辽宁
                 'city' => 'Liaoning B2B Online Meeting',
@@ -258,6 +260,10 @@ class TencentSMSWorker extends BaseWorker implements Worker
             152 => [//内蒙古  （2021年11月23日至25日）  12月13-15
                 'city' => 'Neimenggu B2B Online Meeting',
                 'time' => 'December 13-15, 2021.'
+            ],
+            154 => [//内蒙古  （2022年6月15日至17日）  6月15-17
+                'city' => 'Shandong B2B Online Meeting',
+                'time' => 'June 15-17, 2022.'
             ],
         ];
 
